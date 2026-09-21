@@ -270,30 +270,50 @@ function ImmersivePair({
    */
   const [coverSettled, setCoverSettled] = useState(false);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    if (cover && v >= 0.5) setCoverSettled(true);
+    // Slide-up holds the base longer so the parallax read lands before we latch
+    const latchAt = coverEffect === "slideUp" ? 0.68 : 0.5;
+    if (cover && v >= latchAt) setCoverSettled(true);
   });
 
   const basePan = isMobile && needsWidePan(base.orientation);
   const baseDir = panDirectionForIndex(baseIndex);
+  const isSlideUp = coverEffect === "slideUp";
 
   // Finish the wide-photo pan during the hold beat, before the cover arrives
   const basePanProgress = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
-  // Portrait / desktop: classic Ken Burns scale. Landscape mobile: horizontal reveal pan.
+  /**
+   * Slide-up: keep the back photo almost fixed (tiny parallax) so the
+   * incoming frame feels like it’s rising over a locked background.
+   * Other effects: normal Ken Burns.
+   */
   const baseScale = useTransform(
     scrollYProgress,
-    [0, 1],
-    basePan ? [1, 1] : isMobile ? [1.08, 1.16] : [1.05, 1.18],
+    [0, 0.34, 0.72, 1],
+    isSlideUp
+      ? [1.03, 1.04, 1.05, 1.05]
+      : basePan
+        ? [1, 1, 1, 1]
+        : isMobile
+          ? [1.08, 1.1, 1.14, 1.16]
+          : [1.05, 1.08, 1.14, 1.18],
   );
   const baseY = useTransform(
     scrollYProgress,
-    [0, 1],
-    basePan ? ["0%", "0%"] : isMobile ? ["0%", "-5%"] : ["0%", "-9%"],
+    [0, 0.34, 0.72, 1],
+    isSlideUp
+      ? ["0%", "0%", "-1.5%", "-2%"]
+      : basePan
+        ? ["0%", "0%", "0%", "0%"]
+        : isMobile
+          ? ["0%", "-1%", "-3%", "-5%"]
+          : ["0%", "-2%", "-6%", "-9%"],
   );
 
+  // Under slide-up, keep the base visible longer so parallax is readable
   const baseLayerOpacity = useTransform(
     scrollYProgress,
-    [0.42, 0.52],
+    isSlideUp ? [0.58, 0.74] : [0.42, 0.52],
     [1, 0],
   );
 
@@ -302,8 +322,8 @@ function ImmersivePair({
     [0, 0.06, 0.22, 0.32],
     [0.5, 1, 1, 0],
   );
-  // Cover fades in and STAYS — never animate back to 0
-  const coverOpacity = useTransform(scrollYProgress, [0.34, 0.5], [0, 1]);
+  // Shared cover fade — slides get an even softer local curve in CoverLayer
+  const coverOpacity = useTransform(scrollYProgress, [0.34, 0.52], [0, 1]);
   const coverCopyOpacity = useTransform(
     scrollYProgress,
     [0.55, 0.66],
@@ -524,7 +544,7 @@ function CoverLayer({
   photoIndex: number;
 }) {
   const t0 = 0.34;
-  const t1 = 0.72;
+  const t1 = 0.78;
   const pan = isMobile && needsWidePan(orientation);
   const dir = panDirectionForIndex(photoIndex);
 
@@ -533,9 +553,22 @@ function CoverLayer({
     [t0, t1],
     isMobile ? [1.5, 1] : [1.85, 1],
   );
-  const slideUpY = useTransform(progress, [t0, t1], ["100%", "0%"]);
-  const slideLeftX = useTransform(progress, [t0, t1], ["100%", "0%"]);
-  const slideRightX = useTransform(progress, [t0, t1], ["-100%", "0%"]);
+
+  // Longer slide travel for a softer settle
+  const slideUpY = useTransform(progress, [t0, t1], ["105%", "0%"]);
+  const slideLeftX = useTransform(progress, [t0, t1], ["105%", "0%"]);
+  const slideRightX = useTransform(progress, [t0, t1], ["-105%", "0%"]);
+
+  /**
+   * Soft fade on slides so the leading edge doesn’t feel hard-cut.
+   * Opacity eases in across most of the travel, finishing near settle.
+   */
+  const slideFade = useTransform(
+    progress,
+    [t0, t0 + 0.12, t1 - 0.06, t1],
+    [0, 0.45, 0.92, 1],
+  );
+
   const parallaxScale = useTransform(
     progress,
     [t0, t1],
@@ -560,6 +593,11 @@ function CoverLayer({
     progress,
     [t0, t1],
     isMobile ? [1.2, 1.05] : [1.32, 1.06],
+  );
+  const driftFade = useTransform(
+    progress,
+    [t0, t0 + 0.1, t1],
+    [0, 0.55, 1],
   );
 
   const coverPanProgress = useTransform(progress, [0.5, 1], [0, 1]);
@@ -615,16 +653,16 @@ function CoverLayer({
     effect === "zoomOut"
       ? { opacity, scale: zoomOutScale }
       : effect === "slideUp"
-        ? { opacity, y: slideUpY }
+        ? { opacity: slideFade, y: slideUpY }
         : effect === "slideLeft"
-          ? { opacity, x: slideLeftX }
+          ? { opacity: slideFade, x: slideLeftX }
           : effect === "slideRight"
-            ? { opacity, x: slideRightX }
+            ? { opacity: slideFade, x: slideRightX }
             : effect === "parallaxZoom"
               ? { opacity, scale: parallaxScale, y: parallaxY }
               : effect === "wipeUp"
                 ? { opacity, clipPath: wipeClip }
-                : { opacity, x: driftX, scale: driftScale };
+                : { opacity: driftFade, x: driftX, scale: driftScale };
 
   return (
     <motion.div
