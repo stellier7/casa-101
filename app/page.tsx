@@ -1,5 +1,8 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
+import {
+  CinematicPhoto,
+  CINEMATIC_EFFECTS,
+} from "@/components/CinematicPhoto";
 import { PhotoReveal } from "@/components/PhotoReveal";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
@@ -8,249 +11,229 @@ import {
   getMapsUrl,
 } from "@/lib/property";
 
-type RevealDirection = "left" | "right" | "bottom";
-
-const REVEAL_PATTERN: RevealDirection[] = ["bottom", "left", "right"];
-
 export default function Home() {
-  const hero = PROPERTY.photos[0];
-
   return (
-    <main className="w-full">
-      {/* —— Hero —— */}
-      <section className="relative flex min-h-[100svh] w-full items-end overflow-hidden">
-        <Image
-          src={hero.src}
-          alt={hero.alt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10"
-          aria-hidden="true"
-        />
-        <div className="relative z-10 w-full px-6 pb-16 pt-32 sm:px-10 sm:pb-20">
-          <div className="mx-auto max-w-3xl text-center text-white">
-            <h1 className="text-5xl font-light tracking-[0.04em] sm:text-6xl md:text-7xl">
-              {PROPERTY.name}
-            </h1>
-            <p className="mt-4 text-base font-light tracking-[0.18em] uppercase text-white/85 sm:text-lg">
-              {PROPERTY.location}
-            </p>
-            <p className="mt-2 text-sm tracking-wide text-white/70">
-              {PROPERTY.locationCity}
-            </p>
-            <p className="mt-8 text-2xl font-medium tracking-wide sm:text-3xl">
-              {PROPERTY.price}
-            </p>
-          </div>
-        </div>
-      </section>
+    <main className="w-full bg-black">
+      {/* —— Fullscreen cinematic photo story (Astra-style) —— */}
+      {PROPERTY.photos.map((photo, index) => {
+        const effect = CINEMATIC_EFFECTS[index % CINEMATIC_EFFECTS.length];
+        const isHero = index === 0;
+        // Longer scrub for hold + zoomOut so the Astra effect reads clearly
+        const scrollVh =
+          effect === "hold" ? 240 : effect === "zoomOut" ? 220 : 190;
 
-      {/* —— Photo sequence —— */}
-      <div className="pt-4 sm:pt-8">
-        {PROPERTY.photos.map((photo, index) => (
-          <PhotoReveal
+        return (
+          <CinematicPhoto
             key={photo.src}
             src={photo.src}
             alt={photo.alt}
-            direction={REVEAL_PATTERN[index % REVEAL_PATTERN.length]}
+            effect={effect}
             priority={index < 2}
+            caption={isHero ? undefined : photo.alt}
+            scrollVh={scrollVh}
+            overlay={
+              isHero ? (
+                <div className="w-full px-6 pb-20 pt-28 text-center text-white sm:px-10 sm:pb-24">
+                  <h1 className="text-5xl font-light tracking-[0.06em] sm:text-6xl md:text-8xl">
+                    {PROPERTY.name}
+                  </h1>
+                  <p className="mt-5 text-sm font-light tracking-[0.28em] uppercase text-white/80 sm:text-base">
+                    {PROPERTY.location}
+                  </p>
+                  <p className="mt-8 text-xl font-light tracking-wide text-white/95 sm:text-2xl">
+                    {PROPERTY.price}
+                  </p>
+                </div>
+              ) : undefined
+            }
           />
-        ))}
-      </div>
+        );
+      })}
 
-      {/* —— Key facts —— */}
-      <section className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-8">
-          <FactItem
-            icon={<BedIcon />}
-            value={PROPERTY.facts.bedrooms}
-            label="Dormitorios"
-          />
-          <FactItem
-            icon={<BathIcon />}
-            value={PROPERTY.facts.bathrooms}
-            label="Baños"
-          />
-          <FactItem
-            icon={<AreaIcon />}
-            value={PROPERTY.facts.areaM2}
-            label="m² construcción"
-          />
-          <FactItem
-            icon={<ParkingIcon />}
-            value={PROPERTY.facts.parking}
-            label="Estacionamientos"
-          />
-        </ul>
-      </section>
+      {/* —— Brochure details on light field —— */}
+      <div className="bg-[var(--background)] text-[var(--foreground)]">
+        <section className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-8">
+            <FactItem
+              icon={<BedIcon />}
+              value={PROPERTY.facts.bedrooms}
+              label="Dormitorios"
+            />
+            <FactItem
+              icon={<BathIcon />}
+              value={PROPERTY.facts.bathrooms}
+              label="Baños"
+            />
+            <FactItem
+              icon={<AreaIcon />}
+              value={PROPERTY.facts.areaM2}
+              label="m² construcción"
+            />
+            <FactItem
+              icon={<ParkingIcon />}
+              value={PROPERTY.facts.parking}
+              label="Estacionamientos"
+            />
+          </ul>
+        </section>
 
-      {/* —— Specs summary —— */}
-      <section className="mx-auto max-w-3xl px-6 pb-16 sm:pb-20">
-        <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-          Especificaciones
-        </p>
-        <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
-          En resumen
-        </h2>
-        <dl className="mt-10 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
-          {PROPERTY.specs.map((spec) => (
-            <div
-              key={spec.label}
-              className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] pb-3"
-            >
-              <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
-                {spec.label}
-              </dt>
-              <dd className="text-right text-base font-medium tracking-tight">
-                {spec.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-8 text-center text-sm leading-relaxed text-[var(--muted)] sm:text-base">
-          {PROPERTY.highlight}
-        </p>
-      </section>
-
-      {/* —— Levels —— */}
-      <section className="mx-auto max-w-2xl px-6 pb-16 sm:pb-20">
-        <div className="space-y-12">
-          {PROPERTY.levels.map((level) => (
-            <div key={level.title} className="text-center">
-              <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-                {level.eyebrow}
-              </p>
-              <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
-                {level.title}
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
-                {level.detail}
-              </p>
-              {"tags" in level && level.tags ? (
-                <p className="mt-4 text-sm tracking-wide text-[var(--foreground)]">
-                  {level.tags.join(" · ")}
-                </p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* —— Floor plans —— */}
-      <section className="mx-auto max-w-4xl px-4 pb-8 sm:px-6">
-        <p className="mb-2 text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-          Plantas
-        </p>
-        <h2 className="mb-6 text-center text-2xl font-light tracking-wide sm:text-3xl">
-          Planta arquitectónica
-        </h2>
-        {PROPERTY.floorPlans.map((plan, index) => (
-          <PhotoReveal
-            key={plan.src}
-            src={plan.src}
-            alt={plan.alt}
-            caption={plan.label}
-            direction={index % 2 === 0 ? "left" : "right"}
-            fit="contain"
-            aspectClassName="aspect-[16/10] bg-[var(--background-soft)]"
-          />
-        ))}
-      </section>
-
-      {/* —— Security / respaldo —— */}
-      <section className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
-        <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-          Respaldo
-        </p>
-        <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
-          Respaldo y seguridad
-        </h2>
-        <dl className="mt-10 space-y-5">
-          {PROPERTY.security.map((item) => (
-            <div
-              key={item.label}
-              className="border-b border-[var(--line)] pb-4 text-center sm:flex sm:items-baseline sm:justify-between sm:gap-6 sm:text-left"
-            >
-              <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
-                {item.label}
-              </dt>
-              <dd className="mt-1 text-base sm:mt-0 sm:text-right">
-                {item.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* —— Availability & includes —— */}
-      <section className="mx-auto max-w-xl px-6 pb-16 text-center sm:pb-20">
-        <div className="space-y-6 border-y border-[var(--line)] py-10">
-          <p className="flex flex-col items-center gap-2 text-base text-[var(--foreground)] sm:text-lg">
-            <CalendarIcon />
-            <span>{PROPERTY.availability}</span>
+        <section className="mx-auto max-w-3xl px-6 pb-16 sm:pb-20">
+          <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+            Especificaciones
           </p>
-          <p className="flex flex-col items-center gap-2 text-base text-[var(--muted)] sm:text-lg">
-            <LeafIcon />
-            <span>{PROPERTY.includes}</span>
-          </p>
-          <p className="text-sm tracking-wide text-[var(--muted)]">
-            {PROPERTY.managedBy}
-          </p>
-        </div>
-      </section>
-
-      {/* —— Location —— */}
-      <section className="mx-auto max-w-3xl px-6 pb-16 sm:pb-20">
-        <div className="text-center">
-          <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-            Ubicación
-          </p>
-          <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
-            {PROPERTY.location}
+          <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
+            En resumen
           </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            {PROPERTY.locationCity}
+          <dl className="mt-10 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
+            {PROPERTY.specs.map((spec) => (
+              <div
+                key={spec.label}
+                className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] pb-3"
+              >
+                <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
+                  {spec.label}
+                </dt>
+                <dd className="text-right text-base font-medium tracking-tight">
+                  {spec.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-8 text-center text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+            {PROPERTY.highlight}
           </p>
-          <a
-            href={getMapsUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-block text-sm text-[var(--accent)] underline-offset-4 hover:underline"
-          >
-            Abrir en Google Maps
-          </a>
-        </div>
-        <div className="mt-8 overflow-hidden border border-[var(--line)]">
-          <iframe
-            title={`Mapa de ${PROPERTY.map.label}`}
-            src={getMapsEmbedUrl()}
-            className="h-56 w-full border-0 sm:h-72"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
-        </div>
-      </section>
+        </section>
 
-      {/* —— Visits + Contact —— */}
-      <section className="mx-auto max-w-xl px-6 pb-24 pt-4 text-center sm:pb-32">
-        <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
-          Visitas
-        </p>
-        <p className="mt-3 text-base leading-relaxed text-[var(--foreground)] sm:text-lg">
-          {PROPERTY.visits}
-        </p>
-        <div className="mt-10 flex justify-center">
-          <WhatsAppButton property={PROPERTY} />
-        </div>
-        <p className="mt-4 text-sm text-[var(--muted)]">
-          {PROPERTY.whatsappDisplay}
-        </p>
-      </section>
+        <section className="mx-auto max-w-2xl px-6 pb-16 sm:pb-20">
+          <div className="space-y-12">
+            {PROPERTY.levels.map((level) => (
+              <div key={level.title} className="text-center">
+                <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+                  {level.eyebrow}
+                </p>
+                <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
+                  {level.title}
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
+                  {level.detail}
+                </p>
+                {"tags" in level && level.tags ? (
+                  <p className="mt-4 text-sm tracking-wide text-[var(--foreground)]">
+                    {level.tags.join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-4 pb-8 sm:px-6">
+          <p className="mb-2 text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+            Plantas
+          </p>
+          <h2 className="mb-6 text-center text-2xl font-light tracking-wide sm:text-3xl">
+            Planta arquitectónica
+          </h2>
+          {PROPERTY.floorPlans.map((plan, index) => (
+            <PhotoReveal
+              key={plan.src}
+              src={plan.src}
+              alt={plan.alt}
+              caption={plan.label}
+              direction={index % 2 === 0 ? "left" : "right"}
+              fit="contain"
+              aspectClassName="aspect-[16/10] bg-[var(--background-soft)]"
+            />
+          ))}
+        </section>
+
+        <section className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+          <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+            Respaldo
+          </p>
+          <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
+            Respaldo y seguridad
+          </h2>
+          <dl className="mt-10 space-y-5">
+            {PROPERTY.security.map((item) => (
+              <div
+                key={item.label}
+                className="border-b border-[var(--line)] pb-4 text-center sm:flex sm:items-baseline sm:justify-between sm:gap-6 sm:text-left"
+              >
+                <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
+                  {item.label}
+                </dt>
+                <dd className="mt-1 text-base sm:mt-0 sm:text-right">
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="mx-auto max-w-xl px-6 pb-16 text-center sm:pb-20">
+          <div className="space-y-6 border-y border-[var(--line)] py-10">
+            <p className="flex flex-col items-center gap-2 text-base text-[var(--foreground)] sm:text-lg">
+              <CalendarIcon />
+              <span>{PROPERTY.availability}</span>
+            </p>
+            <p className="flex flex-col items-center gap-2 text-base text-[var(--muted)] sm:text-lg">
+              <LeafIcon />
+              <span>{PROPERTY.includes}</span>
+            </p>
+            <p className="text-sm tracking-wide text-[var(--muted)]">
+              {PROPERTY.managedBy}
+            </p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-3xl px-6 pb-16 sm:pb-20">
+          <div className="text-center">
+            <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+              Ubicación
+            </p>
+            <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
+              {PROPERTY.location}
+            </h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              {PROPERTY.locationCity}
+            </p>
+            <a
+              href={getMapsUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-sm text-[var(--accent)] underline-offset-4 hover:underline"
+            >
+              Abrir en Google Maps
+            </a>
+          </div>
+          <div className="mt-8 overflow-hidden border border-[var(--line)]">
+            <iframe
+              title={`Mapa de ${PROPERTY.map.label}`}
+              src={getMapsEmbedUrl()}
+              className="h-56 w-full border-0 sm:h-72"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-xl px-6 pb-24 pt-4 text-center sm:pb-32">
+          <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+            Visitas
+          </p>
+          <p className="mt-3 text-base leading-relaxed text-[var(--foreground)] sm:text-lg">
+            {PROPERTY.visits}
+          </p>
+          <div className="mt-10 flex justify-center">
+            <WhatsAppButton property={PROPERTY} />
+          </div>
+          <p className="mt-4 text-sm text-[var(--muted)]">
+            {PROPERTY.whatsappDisplay}
+          </p>
+        </section>
+      </div>
     </main>
   );
 }
