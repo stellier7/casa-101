@@ -30,14 +30,14 @@ export default function Home() {
             scrollVh={cover ? 300 : 200}
             overlay={
               isHero ? (
-                <div className="w-full px-6 pb-20 pt-28 text-center text-white sm:px-10 sm:pb-24">
-                  <h1 className="text-5xl font-light tracking-[0.06em] sm:text-6xl md:text-8xl">
+                <div className="w-full px-5 pb-14 pt-24 text-center text-white sm:px-10 sm:pb-24 sm:pt-28">
+                  <h1 className="text-4xl font-light tracking-[0.06em] sm:text-6xl md:text-8xl">
                     {PROPERTY.name}
                   </h1>
-                  <p className="mt-5 text-sm font-light tracking-[0.28em] uppercase text-white/80 sm:text-base">
+                  <p className="mt-4 text-xs font-light tracking-[0.24em] uppercase text-white/80 sm:mt-5 sm:text-base sm:tracking-[0.28em]">
                     {PROPERTY.location}
                   </p>
-                  <p className="mt-8 text-xl font-light tracking-wide text-white/95 sm:text-2xl">
+                  <p className="mt-6 text-lg font-light tracking-wide text-white/95 sm:mt-8 sm:text-2xl">
                     {PROPERTY.price}
                   </p>
                 </div>
