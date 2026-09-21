@@ -1,16 +1,10 @@
 import type { NextConfig } from "next";
 
-/**
- * Static export for a brochure site.
- * Served at domain root (/) — never use basePath on Vercel.
- * outputDirectory is "out" (see vercel.json).
- */
+/** Standard Next.js config for Vercel — do not set outputDirectory to "out". */
 const nextConfig: NextConfig = {
-  output: "export",
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
   },
-  trailingSlash: false,
 };
 
 export default nextConfig;

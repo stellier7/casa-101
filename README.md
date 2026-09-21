@@ -2,20 +2,19 @@
 
 Single-page rental brochure for **Casa 101** (Residencial San Ignacio).
 
-## Open the live site
+## Live site
 
-1. Go to https://vercel.com/santiago-telliers-projects/casa-101  
-2. Click **Deployments** → latest on `main` → **Visit**
-
-Or assign a domain under **Settings → Domains** (e.g. `casa-101.vercel.app`).
+After deploy: [Vercel project](https://vercel.com/santiago-telliers-projects/casa-101) → **Deployments** → **Visit**
 
 ## Local
 
 ```bash
 npm install
+npm run build && npm start
+# or
 npm run dev
 ```
 
 ## Edit content
 
-[`lib/property.ts`](lib/property.ts) — name, price, facts, WhatsApp, photos.
+[`lib/property.ts`](lib/property.ts) — name, price, facts, WhatsApp, photos under `public/photos/`.
