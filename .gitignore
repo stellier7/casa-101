@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cursor / impeccable local tooling
+.cursor/skills/impeccable/scripts/bin/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.cursor/

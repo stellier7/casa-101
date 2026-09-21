@@ -10,11 +10,9 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.GITHUB_PAGES === "true"
-      ? "https://stellier7.github.io/casa-101/"
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000",
+    process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000",
   ),
   title: "Casa 101 · Residencial San Ignacio",
   description:

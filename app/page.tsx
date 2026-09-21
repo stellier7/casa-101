@@ -1,7 +1,7 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { PhotoReveal } from "@/components/PhotoReveal";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { asset } from "@/lib/asset";
 import {
   PROPERTY,
   getMapsEmbedUrl,
@@ -19,13 +19,13 @@ export default function Home() {
     <main className="w-full">
       {/* —— Hero —— */}
       <section className="relative flex min-h-[100svh] w-full items-end overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={asset(hero.src)}
+        <Image
+          src={hero.src}
           alt={hero.alt}
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
         />
         <div
           className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/10"

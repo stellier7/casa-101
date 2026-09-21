@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import type { ReactNode } from "react";
-import { asset } from "@/lib/asset";
 
 type Direction = "left" | "right" | "bottom";
 
@@ -51,27 +51,19 @@ export function PhotoReveal({
             : { duration: 0.85, ease: [0.22, 1, 0.36, 1] }
         }
       >
-        <div className={`relative w-full ${aspectClassName}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={asset(src)}
+        <div className={`relative w-full overflow-hidden ${aspectClassName}`}>
+          <Image
+            src={src}
             alt={alt}
-            loading={priority ? "eager" : "lazy"}
-            decoding="async"
-            className={`absolute inset-0 h-full w-full ${
-              fit === "contain" ? "object-contain" : "object-cover"
-            }`}
+            fill
+            sizes="(max-width: 768px) 100vw, 1024px"
+            className={fit === "contain" ? "object-contain" : "object-cover"}
+            priority={priority}
           />
         </div>
-        {caption ? (
-          <figcaption className="mt-3 text-center text-sm tracking-wide text-[var(--muted)]">
-            {caption}
-          </figcaption>
-        ) : (
-          <figcaption className="mt-3 text-center text-sm tracking-wide text-[var(--muted)]">
-            {alt}
-          </figcaption>
-        )}
+        <figcaption className="mt-3 text-center text-sm tracking-wide text-[var(--muted)]">
+          {caption ?? alt}
+        </figcaption>
       </motion.figure>
     </section>
   );

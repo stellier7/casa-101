@@ -1,24 +1,13 @@
 import type { NextConfig } from "next";
 
-const repoName = "casa-101";
-const isGithubPages = process.env.GITHUB_PAGES === "true";
-const basePath = isGithubPages ? `/${repoName}` : "";
-
+/**
+ * Vercel-first config. Site is served at the domain root (/).
+ * Do NOT set basePath here — that breaks CSS/images on Vercel.
+ */
 const nextConfig: NextConfig = {
-  output: "export",
-  trailingSlash: true,
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
   },
-  env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
-  },
-  ...(isGithubPages
-    ? {
-        basePath,
-        assetPrefix: `${basePath}/`,
-      }
-    : {}),
 };
 
 export default nextConfig;
