@@ -9,6 +9,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000",
+  ),
   title: "Casa 101 · Residencial San Ignacio",
   description:
     "Catálogo digital de alquiler — Casa 101 en Residencial San Ignacio. US$5,000/mes.",
