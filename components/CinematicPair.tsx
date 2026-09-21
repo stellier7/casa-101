@@ -2,6 +2,7 @@
 
 import {
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -262,6 +263,16 @@ function ImmersivePair({
     offset: ["start start", "end end"],
   });
 
+  /**
+   * Latch once the cover has landed. Sticky + useScroll can jitter progress
+   * backward when a section unpins — without a latch the base flashes again
+   * (1 → 2 → glimpse of 1 → 3). After latch we never reveal the base.
+   */
+  const [coverSettled, setCoverSettled] = useState(false);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (cover && v >= 0.5) setCoverSettled(true);
+  });
+
   const basePan = isMobile && needsWidePan(base.orientation);
   const baseDir = panDirectionForIndex(baseIndex);
 
@@ -280,20 +291,23 @@ function ImmersivePair({
     basePan ? ["0%", "0%"] : isMobile ? ["0%", "-5%"] : ["0%", "-9%"],
   );
 
+  const baseLayerOpacity = useTransform(
+    scrollYProgress,
+    [0.42, 0.52],
+    [1, 0],
+  );
+
   const baseCopyOpacity = useTransform(
     scrollYProgress,
     [0, 0.06, 0.22, 0.32],
     [0.5, 1, 1, 0],
   );
-  const coverOpacity = useTransform(
-    scrollYProgress,
-    [0.34, 0.48, 0.85, 0.98],
-    [0, 1, 1, 1],
-  );
+  // Cover fades in and STAYS — never animate back to 0
+  const coverOpacity = useTransform(scrollYProgress, [0.34, 0.5], [0, 1]);
   const coverCopyOpacity = useTransform(
     scrollYProgress,
-    [0.55, 0.66, 0.9, 0.99],
-    [0, 1, 1, 0.9],
+    [0.55, 0.66],
+    [0, 1],
   );
 
   const basePlace = base.infoPlace ?? "bottom";
@@ -342,9 +356,16 @@ function ImmersivePair({
       style={{ height: `${scrollVh}vh` }}
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
+        {/* Base — hidden forever after cover settles so it never flashes again */}
         <motion.div
           className="absolute inset-0 will-change-transform"
-          style={{ scale: baseScale, y: baseY }}
+          style={{
+            scale: baseScale,
+            y: baseY,
+            opacity: coverSettled ? 0 : baseLayerOpacity,
+            pointerEvents: coverSettled ? "none" : undefined,
+          }}
+          aria-hidden={coverSettled}
         >
           {basePan ? (
             <LandscapePanScrub
@@ -383,7 +404,8 @@ function ImmersivePair({
           <CoverLayer
             effect={coverEffect}
             progress={scrollYProgress}
-            opacity={coverOpacity}
+            opacity={coverSettled ? undefined : coverOpacity}
+            settled={coverSettled}
             src={cover.src}
             alt={cover.alt}
             priority={priority}
@@ -398,14 +420,15 @@ function ImmersivePair({
           aria-hidden="true"
         />
 
-        {overlay ? (
+        {!coverSettled && overlay ? (
           <motion.div
             className="absolute inset-0 z-10 flex items-end justify-center"
             style={{ opacity: baseCopyOpacity }}
           >
             {overlay}
           </motion.div>
-        ) : base.info ? (
+        ) : null}
+        {!coverSettled && !overlay && base.info ? (
           <InfoCopy
             alt={base.alt}
             info={base.info}
@@ -421,7 +444,8 @@ function ImmersivePair({
             alt={cover.alt}
             info={cover.info}
             place={resolvedCoverPlace}
-            opacity={coverCopyOpacity}
+            opacity={coverSettled ? undefined : coverCopyOpacity}
+            forceVisible={coverSettled}
             x={coverInfoX}
             y={coverInfoY}
           />
@@ -443,20 +467,26 @@ function InfoCopy({
   info,
   place,
   opacity,
+  forceVisible,
   x,
   y,
 }: {
   alt: string;
   info: string;
   place: InfoPlace;
-  opacity: MotionValue<number>;
+  opacity?: MotionValue<number>;
+  forceVisible?: boolean;
   x: MotionValue<string>;
   y: MotionValue<string>;
 }) {
   return (
     <motion.div
       className={`pointer-events-none absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[place]}`}
-      style={{ opacity, x, y }}
+      style={
+        forceVisible
+          ? { opacity: 1 }
+          : { opacity, x, y }
+      }
     >
       <div className="max-w-[min(100%,24rem)]">
         <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70 sm:text-xs">
@@ -474,6 +504,7 @@ function CoverLayer({
   effect,
   progress,
   opacity,
+  settled,
   src,
   alt,
   priority,
@@ -483,7 +514,8 @@ function CoverLayer({
 }: {
   effect: CoverEffect;
   progress: MotionValue<number>;
-  opacity: MotionValue<number>;
+  opacity?: MotionValue<number>;
+  settled: boolean;
   src: string;
   alt: string;
   priority: boolean;
@@ -506,13 +538,13 @@ function CoverLayer({
   const slideRightX = useTransform(progress, [t0, t1], ["-100%", "0%"]);
   const parallaxScale = useTransform(
     progress,
-    [t0, t1, 1],
-    isMobile ? [1.25, 1.06, 1.1] : [1.4, 1.08, 1.14],
+    [t0, t1],
+    isMobile ? [1.25, 1.06] : [1.4, 1.08],
   );
   const parallaxY = useTransform(
     progress,
-    [t0, t1, 1],
-    isMobile ? ["18%", "0%", "-4%"] : ["26%", "0%", "-6%"],
+    [t0, t1],
+    isMobile ? ["18%", "0%"] : ["26%", "0%"],
   );
   const wipeClip = useTransform(
     progress,
@@ -521,17 +553,63 @@ function CoverLayer({
   );
   const driftX = useTransform(
     progress,
-    [t0, t1, 1],
-    isMobile ? ["18%", "0%", "-2%"] : ["28%", "0%", "-3%"],
+    [t0, t1],
+    isMobile ? ["18%", "0%"] : ["28%", "0%"],
   );
   const driftScale = useTransform(
     progress,
-    [t0, t1, 1],
-    isMobile ? [1.2, 1.05, 1.08] : [1.32, 1.06, 1.1],
+    [t0, t1],
+    isMobile ? [1.2, 1.05] : [1.32, 1.06],
   );
 
-  // Cover entrance still uses pair effect; once settled, landscape keeps panning
-  const coverPanProgress = useTransform(progress, [0.48, 1], [0, 1]);
+  const coverPanProgress = useTransform(progress, [0.5, 1], [0, 1]);
+
+  const media = pan ? (
+    <LandscapePanScrub
+      src={src}
+      alt={alt}
+      priority={priority}
+      direction={dir}
+      progress={coverPanProgress}
+    />
+  ) : (
+    <div className="absolute inset-[-12%]">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="100vw"
+        priority={priority}
+        className="object-cover object-center"
+      />
+    </div>
+  );
+
+  // After latch: no reversible entrance transforms — cover stays put
+  if (settled) {
+    return (
+      <div className="absolute inset-0 z-[2] overflow-hidden bg-black">
+        {pan ? (
+          <LandscapePanScrub
+            src={src}
+            alt={alt}
+            priority={priority}
+            direction={dir}
+            progress={coverPanProgress}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes="100vw"
+            priority={priority}
+            className="object-cover object-center"
+          />
+        )}
+      </div>
+    );
+  }
 
   const style =
     effect === "zoomOut"
@@ -553,26 +631,7 @@ function CoverLayer({
       className="absolute inset-0 z-[2] overflow-hidden bg-black will-change-transform"
       style={style}
     >
-      {pan ? (
-        <LandscapePanScrub
-          src={src}
-          alt={alt}
-          priority={priority}
-          direction={dir}
-          progress={coverPanProgress}
-        />
-      ) : (
-        <div className="absolute inset-[-12%]">
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            sizes="100vw"
-            priority={priority}
-            className="object-cover object-center"
-          />
-        </div>
-      )}
+      {media}
     </motion.div>
   );
 }
