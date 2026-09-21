@@ -55,6 +55,17 @@ Replace files in `public/photos/` (keep filenames or update `PROPERTY.photos`). 
 
 ## Deploy
 
-Push to `main` — the GitHub Actions workflow builds a static export and publishes to Pages.
+### Live site (after one Settings click)
 
-If Pages is not enabled yet: **Settings → Pages → Source: GitHub Actions**.
+**https://stellier7.github.io/casa-101/**
+
+1. Open **[Settings → Pages](https://github.com/stellier7/casa-101/settings/pages)**
+2. Under **Build and deployment → Source**, choose **Deploy from a branch**
+3. Branch: **`gh-pages`** / folder **`/` (root)** → Save
+4. Wait ~1 minute, then open the URL above
+
+Pushes to `main` rebuild and update the `gh-pages` branch automatically.
+
+### Why not Vercel?
+
+`casa-101.vercel.app` returns **404** (domain not assigned). Team deployment URLs are missing or behind Vercel login — not usable for NFC.
