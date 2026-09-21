@@ -5,5 +5,6 @@ export type PhotoOrientation = "landscape" | "portrait" | "square";
 export type PanDirection = "ltr" | "rtl";
 
 export function panDirectionForIndex(index: number): PanDirection {
-  return index % 2 === 0 ? "ltr" : "rtl";
+  // Photo 1 (index 0) pans right → left; photo 2 left → right; then alternate
+  return index % 2 === 0 ? "rtl" : "ltr";
 }
