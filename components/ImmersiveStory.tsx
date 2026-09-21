@@ -28,6 +28,7 @@ export function ImmersiveStory() {
                 base={base}
                 cover={cover}
                 coverEffect={coverEffect}
+                baseIndex={pairIndex * 2}
                 priority={pairIndex === 0}
                 isHero={isHero}
                 scrollVh={cover ? 300 : 200}

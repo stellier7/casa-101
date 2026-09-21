@@ -39,6 +39,40 @@ body {
   overscroll-behavior-x: none;
 }
 
+/* Quiet-mode landscape reveal — slow LTR / RTL ken burns */
+@keyframes pan-ltr {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-36%);
+  }
+}
+
+@keyframes pan-rtl {
+  from {
+    transform: translateX(-36%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+.animate-pan-ltr {
+  animation: pan-ltr 14s ease-in-out infinite alternate;
+}
+
+.animate-pan-rtl {
+  animation: pan-rtl 14s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pan-ltr,
+  .animate-pan-rtl {
+    animation: none;
+  }
+}
+
 ::selection {
   background: color-mix(in srgb, var(--accent) 22%, white);
   color: var(--foreground);

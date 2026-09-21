@@ -13,6 +13,11 @@ import { CursorParallax } from "@/components/CursorParallax";
 import { useQuietView } from "@/components/QuietView";
 import type { CoverEffect } from "@/lib/cinematic";
 import {
+  panDirectionForIndex,
+  type PanDirection,
+  type PhotoOrientation,
+} from "@/lib/photo-frame";
+import {
   INFO_PLACE_CLASS,
   infoMotionFrom,
   type InfoPlace,
@@ -23,16 +28,18 @@ export type PhotoChapter = {
   alt: string;
   info?: string | null;
   infoPlace?: InfoPlace;
+  orientation?: PhotoOrientation;
 };
 
 type CinematicPairProps = {
   base: PhotoChapter;
   cover?: PhotoChapter;
   coverEffect: CoverEffect;
+  /** Global photo index for base (0, 2, 4…) — drives LTR / RTL pan */
+  baseIndex: number;
   priority?: boolean;
   overlay?: ReactNode;
   scrollVh?: number;
-  /** First pair — enable cursor parallax on the base photo */
   isHero?: boolean;
 };
 
@@ -48,26 +55,112 @@ function useIsMobile() {
   return mobile;
 }
 
-/** Quiet / reduced-motion: stacked full-bleed frames, still immersive, no scrub */
+function needsWidePan(orientation?: PhotoOrientation) {
+  return orientation === "landscape" || orientation === "square";
+}
+
+/**
+ * Landscape on a tall phone: image is wider than the viewport.
+ * We fill height and pan horizontally so you see the whole frame.
+ */
+function LandscapePanScrub({
+  src,
+  alt,
+  priority,
+  direction,
+  progress,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  direction: PanDirection;
+  progress: MotionValue<number>;
+}) {
+  const x = useTransform(
+    progress,
+    [0, 1],
+    direction === "ltr" ? ["0%", "-36%"] : ["-36%", "0%"],
+  );
+
+  return (
+    <motion.div
+      className="absolute top-0 h-full w-[155%] will-change-transform"
+      style={{ x }}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="200vw"
+        priority={priority}
+        className="object-cover object-center"
+      />
+    </motion.div>
+  );
+}
+
+function LandscapePanLoop({
+  src,
+  alt,
+  priority,
+  direction,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  direction: PanDirection;
+}) {
+  return (
+    <div
+      className={`absolute top-0 h-full w-[155%] will-change-transform ${
+        direction === "ltr" ? "animate-pan-ltr" : "animate-pan-rtl"
+      }`}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="200vw"
+        priority={priority}
+        className="object-cover object-center"
+      />
+    </div>
+  );
+}
+
 function QuietFrame({
   photo,
   overlay,
   priority,
+  photoIndex,
 }: {
   photo: PhotoChapter;
   overlay?: ReactNode;
   priority?: boolean;
+  photoIndex: number;
 }) {
+  const pan = needsWidePan(photo.orientation);
+  const direction = panDirectionForIndex(photoIndex);
+
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-black">
-      <Image
-        src={photo.src}
-        alt={photo.alt}
-        fill
-        sizes="100vw"
-        priority={priority}
-        className="object-cover object-center"
-      />
+      {pan ? (
+        <LandscapePanLoop
+          src={photo.src}
+          alt={photo.alt}
+          priority={priority}
+          direction={direction}
+        />
+      ) : (
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          sizes="100vw"
+          priority={priority}
+          className="object-cover object-center"
+        />
+      )}
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"
         aria-hidden="true"
@@ -94,15 +187,11 @@ function QuietFrame({
   );
 }
 
-/**
- * Astra-style immersive pair:
- * full-bleed object-cover · odd photo holds with Ken Burns · even covers with a unique effect ·
- * type pinned over moving photography.
- */
 export function CinematicPair({
   base,
   cover,
   coverEffect,
+  baseIndex,
   priority = false,
   overlay,
   scrollVh = 280,
@@ -116,8 +205,15 @@ export function CinematicPair({
   if (quiet || reduceMotion) {
     return (
       <>
-        <QuietFrame photo={base} overlay={overlay} priority={priority} />
-        {cover ? <QuietFrame photo={cover} /> : null}
+        <QuietFrame
+          photo={base}
+          overlay={overlay}
+          priority={priority}
+          photoIndex={baseIndex}
+        />
+        {cover ? (
+          <QuietFrame photo={cover} photoIndex={baseIndex + 1} />
+        ) : null}
       </>
     );
   }
@@ -128,9 +224,10 @@ export function CinematicPair({
       base={base}
       cover={cover}
       coverEffect={coverEffect}
+      baseIndex={baseIndex}
       priority={priority}
       overlay={overlay}
-      scrollVh={isMobile ? (cover ? 240 : 160) : scrollVh}
+      scrollVh={isMobile ? (cover ? 260 : 180) : scrollVh}
       isHero={isHero}
       isMobile={isMobile}
     />
@@ -142,6 +239,7 @@ function ImmersivePair({
   base,
   cover,
   coverEffect,
+  baseIndex,
   priority,
   overlay,
   scrollVh,
@@ -152,6 +250,7 @@ function ImmersivePair({
   base: PhotoChapter;
   cover?: PhotoChapter;
   coverEffect: CoverEffect;
+  baseIndex: number;
   priority: boolean;
   overlay?: ReactNode;
   scrollVh: number;
@@ -163,26 +262,32 @@ function ImmersivePair({
     offset: ["start start", "end end"],
   });
 
-  // Photo moves under pinned type (Astra “WILD” beat)
+  const basePan = isMobile && needsWidePan(base.orientation);
+  const baseDir = panDirectionForIndex(baseIndex);
+
+  // Finish the wide-photo pan during the hold beat, before the cover arrives
+  const basePanProgress = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
+
+  // Portrait / desktop: classic Ken Burns scale. Landscape mobile: horizontal reveal pan.
   const baseScale = useTransform(
     scrollYProgress,
     [0, 1],
-    isMobile ? [1.08, 1.16] : [1.05, 1.18],
+    basePan ? [1, 1] : isMobile ? [1.08, 1.16] : [1.05, 1.18],
   );
   const baseY = useTransform(
     scrollYProgress,
     [0, 1],
-    isMobile ? ["0%", "-5%"] : ["0%", "-9%"],
+    basePan ? ["0%", "0%"] : isMobile ? ["0%", "-5%"] : ["0%", "-9%"],
   );
 
   const baseCopyOpacity = useTransform(
     scrollYProgress,
-    [0, 0.06, 0.26, 0.36],
+    [0, 0.06, 0.22, 0.32],
     [0.5, 1, 1, 0],
   );
   const coverOpacity = useTransform(
     scrollYProgress,
-    [0.3, 0.42, 0.85, 0.98],
+    [0.34, 0.48, 0.85, 0.98],
     [0, 1, 1, 1],
   );
   const coverCopyOpacity = useTransform(
@@ -233,6 +338,7 @@ function ImmersivePair({
       ref={sectionRef}
       className="relative w-full bg-black"
       data-cover-effect={cover ? coverEffect : "solo"}
+      data-pan={basePan ? baseDir : undefined}
       style={{ height: `${scrollVh}vh` }}
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
@@ -240,7 +346,15 @@ function ImmersivePair({
           className="absolute inset-0 will-change-transform"
           style={{ scale: baseScale, y: baseY }}
         >
-          {isHero ? (
+          {basePan ? (
+            <LandscapePanScrub
+              src={base.src}
+              alt={base.alt}
+              priority={priority}
+              direction={baseDir}
+              progress={basePanProgress}
+            />
+          ) : isHero ? (
             <CursorParallax enabled={!isMobile} strength={22}>
               <Image
                 src={base.src}
@@ -274,6 +388,8 @@ function ImmersivePair({
             alt={cover.alt}
             priority={priority}
             isMobile={isMobile}
+            orientation={cover.orientation}
+            photoIndex={baseIndex + 1}
           />
         ) : null}
 
@@ -346,7 +462,6 @@ function InfoCopy({
         <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70 sm:text-xs">
           {alt}
         </p>
-        {/* Oversized editorial type — Astra destination sections */}
         <p className="mt-2 text-2xl font-light leading-tight tracking-wide text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl">
           {info}
         </p>
@@ -363,6 +478,8 @@ function CoverLayer({
   alt,
   priority,
   isMobile,
+  orientation,
+  photoIndex,
 }: {
   effect: CoverEffect;
   progress: MotionValue<number>;
@@ -371,9 +488,13 @@ function CoverLayer({
   alt: string;
   priority: boolean;
   isMobile: boolean;
+  orientation?: PhotoOrientation;
+  photoIndex: number;
 }) {
-  const t0 = 0.3;
+  const t0 = 0.34;
   const t1 = 0.72;
+  const pan = isMobile && needsWidePan(orientation);
+  const dir = panDirectionForIndex(photoIndex);
 
   const zoomOutScale = useTransform(
     progress,
@@ -409,6 +530,9 @@ function CoverLayer({
     isMobile ? [1.2, 1.05, 1.08] : [1.32, 1.06, 1.1],
   );
 
+  // Cover entrance still uses pair effect; once settled, landscape keeps panning
+  const coverPanProgress = useTransform(progress, [0.48, 1], [0, 1]);
+
   const style =
     effect === "zoomOut"
       ? { opacity, scale: zoomOutScale }
@@ -426,19 +550,29 @@ function CoverLayer({
 
   return (
     <motion.div
-      className="absolute inset-0 z-[2] bg-black will-change-transform"
+      className="absolute inset-0 z-[2] overflow-hidden bg-black will-change-transform"
       style={style}
     >
-      <div className="absolute inset-[-12%]">
-        <Image
+      {pan ? (
+        <LandscapePanScrub
           src={src}
           alt={alt}
-          fill
-          sizes="100vw"
           priority={priority}
-          className="object-cover object-center"
+          direction={dir}
+          progress={coverPanProgress}
         />
-      </div>
+      ) : (
+        <div className="absolute inset-[-12%]">
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes="100vw"
+            priority={priority}
+            className="object-cover object-center"
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

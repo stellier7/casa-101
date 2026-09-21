@@ -21,12 +21,11 @@ const QuietContext = createContext<QuietContextValue | null>(null);
 export function QuietViewProvider({ children }: { children: ReactNode }) {
   const [quiet, setQuiet] = useState(false);
 
-  // Prefer quiet on coarse pointers (phones) for first paint — user can turn show on
+  // Only force quiet for reduced-motion — phones default to Show mode (user preference)
   useEffect(() => {
-    const coarse = window.matchMedia("(pointer: coarse)").matches;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) setQuiet(true);
-    else if (coarse) setQuiet(true);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setQuiet(true);
+    }
   }, []);
 
   const toggle = useCallback(() => setQuiet((q) => !q), []);
