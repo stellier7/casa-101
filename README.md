@@ -1,31 +1,21 @@
 # Casa 101 — catálogo digital NFC
 
-Single-page rental brochure for **Casa 101** (Residencial San Ignacio). Designed for NFC tap on a phone: one clean scroll from hero to WhatsApp contact.
+Single-page rental brochure for **Casa 101** (Residencial San Ignacio).
 
-## Live site
+## Open the live site
 
-Open the Vercel project → **Deployments** → latest **Production** → **Visit**:
+1. Go to https://vercel.com/santiago-telliers-projects/casa-101  
+2. Click **Deployments** → latest on `main` → **Visit**
 
-https://vercel.com/santiago-telliers-projects/casa-101
+Or assign a domain under **Settings → Domains** (e.g. `casa-101.vercel.app`).
 
-(`casa-101.vercel.app` is not assigned — use the Visit link from the dashboard.)
-
-## Stack
-
-- Next.js (App Router) + TypeScript
-- Tailwind CSS
-- Framer Motion (scroll-triggered photo reveals)
-- Hosted on Vercel
-
-## Quick start
+## Local
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+## Edit content
 
-## Edit listing data
-
-All property info lives in [`lib/property.ts`](lib/property.ts). Swap photos under `public/photos/`.
+[`lib/property.ts`](lib/property.ts) — name, price, facts, WhatsApp, photos.

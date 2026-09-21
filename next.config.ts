@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
 
 /**
- * Vercel-first config. Site is served at the domain root (/).
- * Do NOT set basePath here — that breaks CSS/images on Vercel.
+ * Static export for a brochure site.
+ * Served at domain root (/) — never use basePath on Vercel.
+ * outputDirectory is "out" (see vercel.json).
  */
 const nextConfig: NextConfig = {
+  output: "export",
   images: {
-    formats: ["image/avif", "image/webp"],
+    unoptimized: true,
   },
+  trailingSlash: false,
 };
 
 export default nextConfig;
