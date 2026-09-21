@@ -12,6 +12,8 @@ type PhotoRevealProps = {
   direction?: Direction;
   priority?: boolean;
   caption?: ReactNode;
+  fit?: "cover" | "contain";
+  aspectClassName?: string;
 };
 
 const OFFSET: Record<Direction, { x: number; y: number }> = {
@@ -26,6 +28,8 @@ export function PhotoReveal({
   direction = "bottom",
   priority = false,
   caption,
+  fit = "cover",
+  aspectClassName = "aspect-[4/3] sm:aspect-[16/10]",
 }: PhotoRevealProps) {
   const reduceMotion = useReducedMotion();
   const offset = OFFSET[direction];
@@ -47,13 +51,13 @@ export function PhotoReveal({
             : { duration: 0.85, ease: [0.22, 1, 0.36, 1] }
         }
       >
-        <div className="relative aspect-[4/3] w-full sm:aspect-[16/10]">
+        <div className={`relative w-full ${aspectClassName}`}>
           <Image
             src={src}
             alt={alt}
             fill
             sizes="(max-width: 768px) 100vw, 1024px"
-            className="object-cover"
+            className={fit === "contain" ? "object-contain" : "object-cover"}
             priority={priority}
           />
         </div>

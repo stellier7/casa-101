@@ -28,11 +28,13 @@ All listing data lives in [`lib/property.ts`](lib/property.ts):
 
 | Field | Purpose |
 |-------|---------|
-| `name`, `location`, `price` | Hero + titles |
-| `availability`, `includes`, `visits` | Mid-page facts |
+| `name`, `location`, `locationCity`, `price` | Hero + titles |
+| `availability`, `includes`, `visits`, `managedBy` | Mid-page facts |
 | `whatsappNumber` / `whatsappDisplay` | CTA (`wa.me` digits only) |
-| `facts` | Bedrooms, baths, m², parking (**placeholders**) |
-| `map.lat` / `map.lng` | Google Maps link + embed (**placeholders**) |
+| `facts` | Key facts bar (beds, baths, m², parking) |
+| `specs`, `levels`, `security` | PDF summary sections |
+| `floorPlans` | Architectural plan images |
+| `map` | Google Maps query / lat-lng for Tegucigalpa |
 | `photos` | Paths + Spanish alt text under `/public/photos` |
 
 The WhatsApp message is built from `name`:

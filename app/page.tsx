@@ -39,6 +39,9 @@ export default function Home() {
             <p className="mt-4 text-base font-light tracking-[0.18em] uppercase text-white/85 sm:text-lg">
               {PROPERTY.location}
             </p>
+            <p className="mt-2 text-sm tracking-wide text-white/70">
+              {PROPERTY.locationCity}
+            </p>
             <p className="mt-8 text-2xl font-medium tracking-wide sm:text-3xl">
               {PROPERTY.price}
             </p>
@@ -65,7 +68,7 @@ export default function Home() {
           <FactItem
             icon={<BedIcon />}
             value={PROPERTY.facts.bedrooms}
-            label="Habitaciones"
+            label="Dormitorios"
           />
           <FactItem
             icon={<BathIcon />}
@@ -74,8 +77,8 @@ export default function Home() {
           />
           <FactItem
             icon={<AreaIcon />}
-            value={`${PROPERTY.facts.areaM2}`}
-            label="m²"
+            value={PROPERTY.facts.areaM2}
+            label="m² construcción"
           />
           <FactItem
             icon={<ParkingIcon />}
@@ -83,6 +86,104 @@ export default function Home() {
             label="Estacionamientos"
           />
         </ul>
+      </section>
+
+      {/* —— Specs summary —— */}
+      <section className="mx-auto max-w-3xl px-6 pb-16 sm:pb-20">
+        <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+          Especificaciones
+        </p>
+        <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
+          En resumen
+        </h2>
+        <dl className="mt-10 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
+          {PROPERTY.specs.map((spec) => (
+            <div
+              key={spec.label}
+              className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] pb-3"
+            >
+              <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
+                {spec.label}
+              </dt>
+              <dd className="text-right text-base font-medium tracking-tight">
+                {spec.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-8 text-center text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+          {PROPERTY.highlight}
+        </p>
+      </section>
+
+      {/* —— Levels —— */}
+      <section className="mx-auto max-w-2xl px-6 pb-16 sm:pb-20">
+        <div className="space-y-12">
+          {PROPERTY.levels.map((level) => (
+            <div key={level.title} className="text-center">
+              <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+                {level.eyebrow}
+              </p>
+              <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
+                {level.title}
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
+                {level.detail}
+              </p>
+              {"tags" in level && level.tags ? (
+                <p className="mt-4 text-sm tracking-wide text-[var(--foreground)]">
+                  {level.tags.join(" · ")}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* —— Floor plans —— */}
+      <section className="mx-auto max-w-4xl px-4 pb-8 sm:px-6">
+        <p className="mb-2 text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+          Plantas
+        </p>
+        <h2 className="mb-6 text-center text-2xl font-light tracking-wide sm:text-3xl">
+          Planta arquitectónica
+        </h2>
+        {PROPERTY.floorPlans.map((plan, index) => (
+          <PhotoReveal
+            key={plan.src}
+            src={plan.src}
+            alt={plan.alt}
+            caption={plan.label}
+            direction={index % 2 === 0 ? "left" : "right"}
+            fit="contain"
+            aspectClassName="aspect-[16/10] bg-[var(--background-soft)]"
+          />
+        ))}
+      </section>
+
+      {/* —— Security / respaldo —— */}
+      <section className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+        <p className="text-center text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+          Respaldo
+        </p>
+        <h2 className="mt-2 text-center text-2xl font-light tracking-wide sm:text-3xl">
+          Respaldo y seguridad
+        </h2>
+        <dl className="mt-10 space-y-5">
+          {PROPERTY.security.map((item) => (
+            <div
+              key={item.label}
+              className="border-b border-[var(--line)] pb-4 text-center sm:flex sm:items-baseline sm:justify-between sm:gap-6 sm:text-left"
+            >
+              <dt className="text-xs tracking-[0.12em] uppercase text-[var(--muted)]">
+                {item.label}
+              </dt>
+              <dd className="mt-1 text-base sm:mt-0 sm:text-right">
+                {item.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* —— Availability & includes —— */}
@@ -96,6 +197,9 @@ export default function Home() {
             <LeafIcon />
             <span>{PROPERTY.includes}</span>
           </p>
+          <p className="text-sm tracking-wide text-[var(--muted)]">
+            {PROPERTY.managedBy}
+          </p>
         </div>
       </section>
 
@@ -108,6 +212,9 @@ export default function Home() {
           <h2 className="mt-2 text-2xl font-light tracking-wide sm:text-3xl">
             {PROPERTY.location}
           </h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {PROPERTY.locationCity}
+          </p>
           <a
             href={getMapsUrl()}
             target="_blank"
