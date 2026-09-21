@@ -47,4 +47,21 @@ Replace files in `public/photos/` (keep filenames or update `PROPERTY.photos`). 
 
 ## Deploy
 
-Connect the repo to Vercel — no extra env vars required.
+### Live URL
+
+Production is on Vercel under the team project:
+
+**https://casa-101-santiago-telliers-projects.vercel.app**
+
+(`casa-101.vercel.app` is not assigned and will 404.)
+
+### If the site asks you to log in (NFC will fail)
+
+Vercel **Deployment Protection** is on — visitors get redirected to Vercel SSO. For a public NFC brochure:
+
+1. Open [Vercel → casa-101 → Settings → Deployment Protection](https://vercel.com/santiago-telliers-projects/casa-101/settings/deployment-protection)
+2. Turn **off** “Vercel Authentication” for **Production** (or limit protection to Preview only)
+3. Save, then open the production URL above in a private/incognito window to confirm it loads with no login
+
+No env vars are required.
+
