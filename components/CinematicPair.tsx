@@ -9,6 +9,8 @@ import {
 } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CursorParallax } from "@/components/CursorParallax";
+import { useQuietView } from "@/components/QuietView";
 import type { CoverEffect } from "@/lib/cinematic";
 import {
   INFO_PLACE_CLASS,
@@ -24,18 +26,16 @@ export type PhotoChapter = {
 };
 
 type CinematicPairProps = {
-  /** Odd photo — stays fixed until covered */
   base: PhotoChapter;
-  /** Even photo — covers base with a unique effect */
   cover?: PhotoChapter;
   coverEffect: CoverEffect;
   priority?: boolean;
-  /** Hero / brand overlay on the base (first pair) */
   overlay?: ReactNode;
   scrollVh?: number;
+  /** First pair — enable cursor parallax on the base photo */
+  isHero?: boolean;
 };
 
-/** true below Tailwind `md` (768px) — letterbox full photos on phones */
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
@@ -48,10 +48,56 @@ function useIsMobile() {
   return mobile;
 }
 
+/** Quiet / reduced-motion: stacked full-bleed frames, still immersive, no scrub */
+function QuietFrame({
+  photo,
+  overlay,
+  priority,
+}: {
+  photo: PhotoChapter;
+  overlay?: ReactNode;
+  priority?: boolean;
+}) {
+  return (
+    <section className="relative h-[100svh] w-full overflow-hidden bg-black">
+      <Image
+        src={photo.src}
+        alt={photo.alt}
+        fill
+        sizes="100vw"
+        priority={priority}
+        className="object-cover object-center"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"
+        aria-hidden="true"
+      />
+      {overlay ? (
+        <div className="absolute inset-0 z-10 flex items-end justify-center">
+          {overlay}
+        </div>
+      ) : photo.info ? (
+        <div
+          className={`absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[photo.infoPlace ?? "bottom"]}`}
+        >
+          <div className="max-w-md px-1">
+            <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70">
+              {photo.alt}
+            </p>
+            <p className="mt-2 text-xl font-light leading-snug text-white sm:text-2xl">
+              {photo.info}
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /**
- * Astra-style pair: odd photo holds with parallax; even photo covers it.
- * Mobile: letterboxed object-contain so the whole image is visible.
- * Desktop: immersive object-cover fullscreen.
+ * Astra-style immersive pair:
+ * full-bleed object-cover · odd photo holds with Ken Burns · even covers with a unique effect ·
+ * type pinned over moving photography.
  */
 export function CinematicPair({
   base,
@@ -60,42 +106,80 @@ export function CinematicPair({
   priority = false,
   overlay,
   scrollVh = 280,
+  isHero = false,
 }: CinematicPairProps) {
-  const ref = useRef<HTMLElement>(null);
+  const { quiet } = useQuietView();
   const reduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
-  // Contain on phone = show entire photo; cover on desktop = fill viewport
-  const fitClass = isMobile ? "object-contain object-center" : "object-cover object-center";
-  const bleedClass = isMobile ? "absolute inset-0" : "absolute inset-[-16%]";
+  const ref = useRef<HTMLElement>(null);
 
+  if (quiet || reduceMotion) {
+    return (
+      <>
+        <QuietFrame photo={base} overlay={overlay} priority={priority} />
+        {cover ? <QuietFrame photo={cover} /> : null}
+      </>
+    );
+  }
+
+  return (
+    <ImmersivePair
+      sectionRef={ref}
+      base={base}
+      cover={cover}
+      coverEffect={coverEffect}
+      priority={priority}
+      overlay={overlay}
+      scrollVh={isMobile ? (cover ? 240 : 160) : scrollVh}
+      isHero={isHero}
+      isMobile={isMobile}
+    />
+  );
+}
+
+function ImmersivePair({
+  sectionRef,
+  base,
+  cover,
+  coverEffect,
+  priority,
+  overlay,
+  scrollVh,
+  isHero,
+  isMobile,
+}: {
+  sectionRef: React.RefObject<HTMLElement | null>;
+  base: PhotoChapter;
+  cover?: PhotoChapter;
+  coverEffect: CoverEffect;
+  priority: boolean;
+  overlay?: ReactNode;
+  scrollVh: number;
+  isHero: boolean;
+  isMobile: boolean;
+}) {
   const { scrollYProgress } = useScroll({
-    target: ref,
+    target: sectionRef,
     offset: ["start start", "end end"],
   });
 
-  // Parallax: gentler on mobile so letterboxed images don’t feel jittery
+  // Photo moves under pinned type (Astra “WILD” beat)
   const baseScale = useTransform(
     scrollYProgress,
     [0, 1],
-    isMobile ? [1, 1.04] : [1.04, 1.14],
+    isMobile ? [1.08, 1.16] : [1.05, 1.18],
   );
   const baseY = useTransform(
     scrollYProgress,
     [0, 1],
-    isMobile ? ["0%", "-3%"] : ["0%", "-8%"],
-  );
-  const baseParallaxX = useTransform(
-    scrollYProgress,
-    [0, 1],
-    isMobile ? ["0%", "0%"] : ["0%", "-2%"],
+    isMobile ? ["0%", "-5%"] : ["0%", "-9%"],
   );
 
   const baseCopyOpacity = useTransform(
     scrollYProgress,
     [0, 0.06, 0.26, 0.36],
-    [0.45, 1, 1, 0],
+    [0.5, 1, 1, 0],
   );
-
   const coverOpacity = useTransform(
     scrollYProgress,
     [0.3, 0.42, 0.85, 0.98],
@@ -137,141 +221,105 @@ export function CinematicPair({
     coverFrom.y[0],
   ]);
 
-  // Shorter scrub on mobile — less thumb fatigue
-  const sectionVh = isMobile
-    ? cover
-      ? 220
-      : 140
-    : scrollVh;
+  const resolvedBasePlace: InfoPlace = isMobile
+    ? remapPlace(basePlace)
+    : basePlace;
+  const resolvedCoverPlace: InfoPlace = isMobile
+    ? remapPlace(coverPlace)
+    : coverPlace;
 
   return (
     <section
-      ref={ref}
-      className="relative w-full"
+      ref={sectionRef}
+      className="relative w-full bg-black"
       data-cover-effect={cover ? coverEffect : "solo"}
-      data-fit={isMobile ? "contain" : "cover"}
-      style={{
-        height: reduceMotion
-          ? cover
-            ? "200svh"
-            : "100svh"
-          : `${sectionVh}vh`,
-      }}
+      style={{ height: `${scrollVh}vh` }}
     >
-      <div className="sticky top-0 flex h-[100svh] w-full items-center justify-center overflow-hidden bg-black">
-        {/*
-          Mobile: centered 4:3 cinema band — full photo visible, intentional letterbox.
-          Desktop: stage fills the viewport (immersive cover).
-        */}
-        <div
-          className={
-            isMobile
-              ? "relative aspect-[4/3] w-full max-h-[72svh] max-w-[min(100%,calc(72svh*4/3))] overflow-hidden"
-              : "relative h-full w-full"
-          }
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={{ scale: baseScale, y: baseY }}
         >
-          {reduceMotion ? (
-            <div className="absolute inset-0">
+          {isHero ? (
+            <CursorParallax enabled={!isMobile} strength={22}>
               <Image
                 src={base.src}
                 alt={base.alt}
                 fill
                 sizes="100vw"
                 priority={priority}
-                className={fitClass}
+                className="object-cover object-center"
               />
-            </div>
+            </CursorParallax>
           ) : (
-            <motion.div
-              className="absolute inset-0 will-change-transform"
-              style={{ scale: baseScale, y: baseY, x: baseParallaxX }}
-            >
-              <div className={bleedClass}>
-                <Image
-                  src={base.src}
-                  alt={base.alt}
-                  fill
-                  sizes="100vw"
-                  priority={priority}
-                  className={fitClass}
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {cover && !reduceMotion ? (
-            <CoverLayer
-              effect={coverEffect}
-              progress={scrollYProgress}
-              opacity={coverOpacity}
-              src={cover.src}
-              alt={cover.alt}
-              priority={priority}
-              fitClass={fitClass}
-              bleedClass={bleedClass}
-              isMobile={isMobile}
-            />
-          ) : null}
-          {cover && reduceMotion ? (
-            <motion.div
-              className="absolute inset-0"
-              style={{ opacity: coverOpacity }}
-            >
+            <div className="absolute inset-[-16%]">
               <Image
-                src={cover.src}
-                alt={cover.alt}
+                src={base.src}
+                alt={base.alt}
                 fill
                 sizes="100vw"
-                className={fitClass}
+                priority={priority}
+                className="object-cover object-center"
               />
-            </motion.div>
-          ) : null}
+            </div>
+          )}
+        </motion.div>
 
-          <div
-            className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.28)_100%)]"
-            aria-hidden="true"
+        {cover ? (
+          <CoverLayer
+            effect={coverEffect}
+            progress={scrollYProgress}
+            opacity={coverOpacity}
+            src={cover.src}
+            alt={cover.alt}
+            priority={priority}
+            isMobile={isMobile}
           />
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-1/3 bg-gradient-to-t from-black/60 via-black/15 to-transparent"
-            aria-hidden="true"
+        ) : null}
+
+        <div
+          className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-black/60 via-transparent to-black/15"
+          aria-hidden="true"
+        />
+
+        {overlay ? (
+          <motion.div
+            className="absolute inset-0 z-10 flex items-end justify-center"
+            style={{ opacity: baseCopyOpacity }}
+          >
+            {overlay}
+          </motion.div>
+        ) : base.info ? (
+          <InfoCopy
+            alt={base.alt}
+            info={base.info}
+            place={resolvedBasePlace}
+            opacity={baseCopyOpacity}
+            x={baseInfoX}
+            y={baseInfoY}
           />
+        ) : null}
 
-          {overlay ? (
-            <motion.div
-              className="absolute inset-0 z-10 flex items-end justify-center"
-              style={reduceMotion ? undefined : { opacity: baseCopyOpacity }}
-            >
-              {overlay}
-            </motion.div>
-          ) : base.info ? (
-            <InfoCopy
-              alt={base.alt}
-              info={base.info}
-              place={basePlace}
-              opacity={baseCopyOpacity}
-              x={baseInfoX}
-              y={baseInfoY}
-              reduceMotion={!!reduceMotion}
-              isMobile={isMobile}
-            />
-          ) : null}
-
-          {cover?.info ? (
-            <InfoCopy
-              alt={cover.alt}
-              info={cover.info}
-              place={coverPlace}
-              opacity={coverCopyOpacity}
-              x={coverInfoX}
-              y={coverInfoY}
-              reduceMotion={!!reduceMotion}
-              isMobile={isMobile}
-            />
-          ) : null}
-        </div>
+        {cover?.info ? (
+          <InfoCopy
+            alt={cover.alt}
+            info={cover.info}
+            place={resolvedCoverPlace}
+            opacity={coverCopyOpacity}
+            x={coverInfoX}
+            y={coverInfoY}
+          />
+        ) : null}
       </div>
     </section>
   );
+}
+
+function remapPlace(place: InfoPlace): InfoPlace {
+  if (place === "left" || place === "top-left") return "bottom-left";
+  if (place === "right" || place === "top-right") return "bottom-right";
+  if (place === "top") return "bottom";
+  return place;
 }
 
 function InfoCopy({
@@ -281,8 +329,6 @@ function InfoCopy({
   opacity,
   x,
   y,
-  reduceMotion,
-  isMobile,
 }: {
   alt: string;
   info: string;
@@ -290,30 +336,18 @@ function InfoCopy({
   opacity: MotionValue<number>;
   x: MotionValue<string>;
   y: MotionValue<string>;
-  reduceMotion: boolean;
-  isMobile: boolean;
 }) {
-  // On phones, park side placements along the bottom so they sit in the letterbox band
-  const resolvedPlace: InfoPlace = isMobile
-    ? place === "left" || place === "top-left"
-      ? "bottom-left"
-      : place === "right" || place === "top-right"
-        ? "bottom-right"
-        : place === "top"
-          ? "bottom"
-          : place
-    : place;
-
   return (
     <motion.div
-      className={`pointer-events-none absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[resolvedPlace]}`}
-      style={reduceMotion ? undefined : { opacity, x, y }}
+      className={`pointer-events-none absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[place]}`}
+      style={{ opacity, x, y }}
     >
-      <div className="max-w-[min(100%,22rem)] rounded-sm bg-black/25 px-3 py-2 backdrop-blur-[2px] sm:max-w-md sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
-        <p className="text-[0.6rem] tracking-[0.24em] uppercase text-white/70 sm:text-xs sm:tracking-[0.28em] sm:text-white/65">
+      <div className="max-w-[min(100%,24rem)]">
+        <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70 sm:text-xs">
           {alt}
         </p>
-        <p className="mt-1.5 text-[0.95rem] font-light leading-snug tracking-wide text-white sm:mt-2 sm:text-lg md:text-xl">
+        {/* Oversized editorial type — Astra destination sections */}
+        <p className="mt-2 text-2xl font-light leading-tight tracking-wide text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl">
           {info}
         </p>
       </div>
@@ -328,8 +362,6 @@ function CoverLayer({
   src,
   alt,
   priority,
-  fitClass,
-  bleedClass,
   isMobile,
 }: {
   effect: CoverEffect;
@@ -338,8 +370,6 @@ function CoverLayer({
   src: string;
   alt: string;
   priority: boolean;
-  fitClass: string;
-  bleedClass: string;
   isMobile: boolean;
 }) {
   const t0 = 0.3;
@@ -348,98 +378,65 @@ function CoverLayer({
   const zoomOutScale = useTransform(
     progress,
     [t0, t1],
-    isMobile ? [1.35, 1] : [1.9, 1],
+    isMobile ? [1.5, 1] : [1.85, 1],
   );
-  const zoomOutY = useTransform(progress, [t0, t1], ["4%", "0%"]);
-
   const slideUpY = useTransform(progress, [t0, t1], ["100%", "0%"]);
-  const slideUpScale = useTransform(progress, [t0, t1], [1.08, 1]);
-
   const slideLeftX = useTransform(progress, [t0, t1], ["100%", "0%"]);
-  const slideLeftScale = useTransform(progress, [t0, t1], [1.06, 1]);
-  const slideLeftParallax = useTransform(
-    progress,
-    [t0, 1],
-    isMobile ? ["0%", "-2%"] : ["0%", "-4%"],
-  );
-
   const slideRightX = useTransform(progress, [t0, t1], ["-100%", "0%"]);
-  const slideRightScale = useTransform(progress, [t0, t1], [1.06, 1]);
-  const slideRightParallax = useTransform(
-    progress,
-    [t0, 1],
-    isMobile ? ["0%", "2%"] : ["0%", "4%"],
-  );
-
   const parallaxScale = useTransform(
     progress,
     [t0, t1, 1],
-    isMobile ? [1.2, 1.04, 1.06] : [1.45, 1.08, 1.12],
+    isMobile ? [1.25, 1.06, 1.1] : [1.4, 1.08, 1.14],
   );
   const parallaxY = useTransform(
     progress,
     [t0, t1, 1],
-    isMobile ? ["18%", "0%", "-3%"] : ["28%", "0%", "-6%"],
+    isMobile ? ["18%", "0%", "-4%"] : ["26%", "0%", "-6%"],
   );
-
   const wipeClip = useTransform(
     progress,
     [t0, t1],
     ["inset(100% 0% 0% 0%)", "inset(0% 0% 0% 0%)"],
   );
-  const wipeScale = useTransform(progress, [t0, 1], [1.08, 1.03]);
-  const wipeY = useTransform(progress, [t0, 1], ["0%", "-3%"]);
-
   const driftX = useTransform(
     progress,
     [t0, t1, 1],
-    isMobile ? ["18%", "0%", "-2%"] : ["32%", "0%", "-3%"],
+    isMobile ? ["18%", "0%", "-2%"] : ["28%", "0%", "-3%"],
   );
   const driftScale = useTransform(
     progress,
     [t0, t1, 1],
-    isMobile ? [1.15, 1.03, 1.05] : [1.35, 1.05, 1.1],
+    isMobile ? [1.2, 1.05, 1.08] : [1.32, 1.06, 1.1],
   );
-  const driftY = useTransform(progress, [t0, 1], ["4%", "-2%"]);
 
   const style =
     effect === "zoomOut"
-      ? { opacity, scale: zoomOutScale, y: zoomOutY }
+      ? { opacity, scale: zoomOutScale }
       : effect === "slideUp"
-        ? { opacity, y: slideUpY, scale: slideUpScale }
+        ? { opacity, y: slideUpY }
         : effect === "slideLeft"
-          ? {
-              opacity,
-              x: slideLeftX,
-              scale: slideLeftScale,
-              y: slideLeftParallax,
-            }
+          ? { opacity, x: slideLeftX }
           : effect === "slideRight"
-            ? {
-                opacity,
-                x: slideRightX,
-                scale: slideRightScale,
-                y: slideRightParallax,
-              }
+            ? { opacity, x: slideRightX }
             : effect === "parallaxZoom"
               ? { opacity, scale: parallaxScale, y: parallaxY }
               : effect === "wipeUp"
-                ? { opacity, clipPath: wipeClip, scale: wipeScale, y: wipeY }
-                : { opacity, x: driftX, scale: driftScale, y: driftY };
+                ? { opacity, clipPath: wipeClip }
+                : { opacity, x: driftX, scale: driftScale };
 
   return (
     <motion.div
-      className="absolute inset-0 z-[2] will-change-transform"
+      className="absolute inset-0 z-[2] bg-black will-change-transform"
       style={style}
     >
-      <div className={bleedClass}>
+      <div className="absolute inset-[-12%]">
         <Image
           src={src}
           alt={alt}
           fill
           sizes="100vw"
           priority={priority}
-          className={fitClass}
+          className="object-cover object-center"
         />
       </div>
     </motion.div>

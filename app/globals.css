@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 :root {
   --background: #f7f5f2;
@@ -18,7 +19,10 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Lenis owns smooth scroll */
+  background-color: #000;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -28,12 +32,11 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(120% 80% at 50% -10%, #fffdf9 0%, transparent 55%),
-    linear-gradient(180deg, var(--background) 0%, var(--background-soft) 100%);
-  background-attachment: fixed;
+  background-color: #000;
   color: var(--foreground);
   font-family: var(--font-outfit), ui-sans-serif, sans-serif;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 ::selection {

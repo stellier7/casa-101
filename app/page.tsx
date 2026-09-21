@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { CinematicPair } from "@/components/CinematicPair";
+import { ImmersiveStory } from "@/components/ImmersiveStory";
 import { PhotoReveal } from "@/components/PhotoReveal";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { COVER_EFFECTS, chunkPhotoPairs } from "@/lib/cinematic";
 import {
   PROPERTY,
   getMapsEmbedUrl,
@@ -10,45 +9,18 @@ import {
 } from "@/lib/property";
 
 export default function Home() {
-  const pairs = chunkPhotoPairs(PROPERTY.photos);
-
   return (
     <main className="w-full bg-black">
-      {/* —— Paired cinematic chapters: odd holds, even covers —— */}
-      {pairs.map(([base, cover], pairIndex) => {
-        const coverEffect =
-          COVER_EFFECTS[pairIndex % COVER_EFFECTS.length];
-        const isHero = pairIndex === 0;
-
-        return (
-          <CinematicPair
-            key={base.src}
-            base={base}
-            cover={cover}
-            coverEffect={coverEffect}
-            priority={pairIndex === 0}
-            scrollVh={cover ? 300 : 200}
-            overlay={
-              isHero ? (
-                <div className="w-full px-5 pb-14 pt-24 text-center text-white sm:px-10 sm:pb-24 sm:pt-28">
-                  <h1 className="text-4xl font-light tracking-[0.06em] sm:text-6xl md:text-8xl">
-                    {PROPERTY.name}
-                  </h1>
-                  <p className="mt-4 text-xs font-light tracking-[0.24em] uppercase text-white/80 sm:mt-5 sm:text-base sm:tracking-[0.28em]">
-                    {PROPERTY.location}
-                  </p>
-                  <p className="mt-6 text-lg font-light tracking-wide text-white/95 sm:mt-8 sm:text-2xl">
-                    {PROPERTY.price}
-                  </p>
-                </div>
-              ) : undefined
-            }
-          />
-        );
-      })}
+      <ImmersiveStory />
 
       {/* —— Brochure details on light field —— */}
-      <div className="bg-[var(--background)] text-[var(--foreground)]">
+      <div
+        className="bg-[var(--background)] text-[var(--foreground)]"
+        style={{
+          backgroundImage:
+            "radial-gradient(120% 80% at 50% -10%, #fffdf9 0%, transparent 55%), linear-gradient(180deg, var(--background) 0%, var(--background-soft) 100%)",
+        }}
+      >
         <section className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
           <ul className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-8">
             <FactItem
