@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import Image from "next/image";
 import type { ReactNode } from "react";
+import { asset } from "@/lib/asset";
 
 type Direction = "left" | "right" | "bottom";
 
@@ -52,13 +52,15 @@ export function PhotoReveal({
         }
       >
         <div className={`relative w-full ${aspectClassName}`}>
-          <Image
-            src={src}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={asset(src)}
             alt={alt}
-            fill
-            sizes="(max-width: 768px) 100vw, 1024px"
-            className={fit === "contain" ? "object-contain" : "object-cover"}
-            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            className={`absolute inset-0 h-full w-full ${
+              fit === "contain" ? "object-contain" : "object-cover"
+            }`}
           />
         </div>
         {caption ? (
