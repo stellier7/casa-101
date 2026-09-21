@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
-import {
-  CinematicPhoto,
-  CINEMATIC_EFFECTS,
-} from "@/components/CinematicPhoto";
+import { CinematicPair } from "@/components/CinematicPair";
 import { PhotoReveal } from "@/components/PhotoReveal";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { COVER_EFFECTS, chunkPhotoPairs } from "@/lib/cinematic";
 import {
   PROPERTY,
   getMapsEmbedUrl,
@@ -12,25 +10,24 @@ import {
 } from "@/lib/property";
 
 export default function Home() {
+  const pairs = chunkPhotoPairs(PROPERTY.photos);
+
   return (
     <main className="w-full bg-black">
-      {/* —— Fullscreen cinematic photo story (Astra-style) —— */}
-      {PROPERTY.photos.map((photo, index) => {
-        const effect = CINEMATIC_EFFECTS[index % CINEMATIC_EFFECTS.length];
-        const isHero = index === 0;
-        // Longer scrub for hold + zoomOut so the Astra effect reads clearly
-        const scrollVh =
-          effect === "hold" ? 240 : effect === "zoomOut" ? 220 : 190;
+      {/* —— Paired cinematic chapters: odd holds, even covers —— */}
+      {pairs.map(([base, cover], pairIndex) => {
+        const coverEffect =
+          COVER_EFFECTS[pairIndex % COVER_EFFECTS.length];
+        const isHero = pairIndex === 0;
 
         return (
-          <CinematicPhoto
-            key={photo.src}
-            src={photo.src}
-            alt={photo.alt}
-            effect={effect}
-            priority={index < 2}
-            caption={isHero ? undefined : photo.alt}
-            scrollVh={scrollVh}
+          <CinematicPair
+            key={base.src}
+            base={base}
+            cover={cover}
+            coverEffect={coverEffect}
+            priority={pairIndex === 0}
+            scrollVh={cover ? 300 : 200}
             overlay={
               isHero ? (
                 <div className="w-full px-6 pb-20 pt-28 text-center text-white sm:px-10 sm:pb-24">

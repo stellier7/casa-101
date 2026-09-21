@@ -100,22 +100,95 @@ export const PROPERTY = {
     query: "Residencial San Ignacio, Tegucigalpa, Honduras",
   },
 
-  /** Hero uses the first photo; sequence renders all 14. */
+  /**
+   * Hero uses the first photo; sequence renders all 14.
+   * `info` = 1–2 lines shown on the photo; `infoPlace` keeps text off the subject.
+   */
   photos: [
-    { src: "/photos/01-fachada.jpg", alt: "Fachada principal" },
-    { src: "/photos/02-entrada.jpg", alt: "Entrada principal" },
-    { src: "/photos/03-exterior-frontal.jpg", alt: "Vista exterior frontal" },
-    { src: "/photos/04-piscina-fachada.jpg", alt: "Piscina y fachada" },
-    { src: "/photos/05-sauna.jpg", alt: "Sauna" },
-    { src: "/photos/06-jardin-terraza.jpg", alt: "Jardín y terraza" },
-    { src: "/photos/07-patio.jpg", alt: "Patio exterior" },
-    { src: "/photos/08-piscina-jardin.jpg", alt: "Piscina y jardín" },
-    { src: "/photos/09-piscina-atardecer.jpg", alt: "Piscina al atardecer" },
-    { src: "/photos/10-comedor.jpg", alt: "Comedor" },
-    { src: "/photos/11-estacionamiento.jpg", alt: "Estacionamiento" },
-    { src: "/photos/12-sala.jpg", alt: "Sala principal" },
-    { src: "/photos/13-cocina.jpg", alt: "Cocina" },
-    { src: "/photos/14-chimenea.jpg", alt: "Chimenea" },
+    {
+      src: "/photos/01-fachada.jpg",
+      alt: "Fachada principal",
+      info: null,
+      infoPlace: "bottom",
+    },
+    {
+      src: "/photos/02-entrada.jpg",
+      alt: "Entrada principal",
+      info: "Portón automático y acceso con columnata",
+      infoPlace: "bottom-left",
+    },
+    {
+      src: "/photos/03-exterior-frontal.jpg",
+      alt: "Vista exterior frontal",
+      info: "Lote 1,320.50 m² · Construcción 452.30 m²",
+      infoPlace: "top-right",
+    },
+    {
+      src: "/photos/04-piscina-fachada.jpg",
+      alt: "Piscina y fachada",
+      info: "Piscina 32 m² · 42 m³",
+      infoPlace: "bottom-right",
+    },
+    {
+      src: "/photos/05-sauna.jpg",
+      alt: "Sauna",
+      info: "Sauna privada junto a las áreas exteriores",
+      infoPlace: "left",
+    },
+    {
+      src: "/photos/06-jardin-terraza.jpg",
+      alt: "Jardín y terraza",
+      info: "Jardines en tres costados · dos terrazas",
+      infoPlace: "bottom-left",
+    },
+    {
+      src: "/photos/07-patio.jpg",
+      alt: "Patio exterior",
+      info: "Patio empedrado con rotonda",
+      infoPlace: "top-left",
+    },
+    {
+      src: "/photos/08-piscina-jardin.jpg",
+      alt: "Piscina y jardín",
+      info: "Barbacoa techada con horno de leña",
+      infoPlace: "right",
+    },
+    {
+      src: "/photos/09-piscina-atardecer.jpg",
+      alt: "Piscina al atardecer",
+      info: "Disponible a partir del 1 de enero de 2027",
+      infoPlace: "bottom",
+    },
+    {
+      src: "/photos/10-comedor.jpg",
+      alt: "Comedor",
+      info: "Primer nivel · comedor y sala social",
+      infoPlace: "top-right",
+    },
+    {
+      src: "/photos/11-estacionamiento.jpg",
+      alt: "Estacionamiento",
+      info: "Garaje techado para 5 vehículos",
+      infoPlace: "bottom-left",
+    },
+    {
+      src: "/photos/12-sala.jpg",
+      alt: "Sala principal",
+      info: "Vestíbulo de doble altura · sala social",
+      infoPlace: "left",
+    },
+    {
+      src: "/photos/13-cocina.jpg",
+      alt: "Cocina",
+      info: "Cocina con desayunador y alacena",
+      infoPlace: "bottom-right",
+    },
+    {
+      src: "/photos/14-chimenea.jpg",
+      alt: "Chimenea",
+      info: "Suite principal · chimenea y terraza",
+      infoPlace: "top-left",
+    },
   ],
 } as const;
 
