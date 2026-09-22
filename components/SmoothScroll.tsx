@@ -4,9 +4,10 @@ import Lenis from "lenis";
 import { useEffect, type ReactNode } from "react";
 import { useQuietView } from "@/components/QuietView";
 import {
+  adjacentMagnet,
   animateScrollTo,
   collectMagnetYs,
-  nearestMagnet,
+  MAGNET_SNAP_MS,
 } from "@/lib/scroll-magnet";
 
 function isMobileViewport() {
@@ -19,7 +20,7 @@ function prefersReducedMotion() {
 
 /**
  * Desktop Show mode: Lenis smooth wheel.
- * Mobile Show mode: native scroll + magnets to photo rest stops.
+ * Mobile Show mode: native scroll + soft one-step magnets.
  * Quiet / reduced-motion: no Lenis, no magnets.
  */
 export function SmoothScroll({ children }: { children: ReactNode }) {
@@ -28,12 +29,13 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (quiet || prefersReducedMotion()) return;
 
-    // —— Mobile: native scroll + magnets ——
+    // —— Mobile: native scroll + soft magnets ——
     if (isMobileViewport()) {
       let magnets = collectMagnetYs();
       let snapping = false;
       let touchActive = false;
       let settleTimer = 0;
+      let gestureStartY = window.scrollY;
 
       const refresh = () => {
         magnets = collectMagnetYs();
@@ -42,27 +44,35 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       const snapIfNeeded = () => {
         if (snapping || touchActive) return;
         refresh();
-        // Don't magnetize once the visitor has left the immersive story
         const storyEnd = magnets.length
           ? magnets[magnets.length - 1] + window.innerHeight
           : 0;
         if (window.scrollY > storyEnd) return;
-        const target = nearestMagnet(window.scrollY, magnets);
+
+        const target = adjacentMagnet(
+          window.scrollY,
+          magnets,
+          gestureStartY,
+        );
         if (target == null || Math.abs(target - window.scrollY) < 2) return;
+
         snapping = true;
-        animateScrollTo(target, 380);
+        animateScrollTo(target, MAGNET_SNAP_MS);
         window.setTimeout(() => {
           snapping = false;
-        }, 420);
+          gestureStartY = target;
+        }, MAGNET_SNAP_MS + 40);
       };
 
       const scheduleSnap = () => {
         window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(snapIfNeeded, 120);
+        // Let the scrub play a beat before the soft pull
+        settleTimer = window.setTimeout(snapIfNeeded, 180);
       };
 
       const onTouchStart = () => {
         touchActive = true;
+        gestureStartY = window.scrollY;
         window.clearTimeout(settleTimer);
       };
       const onTouchEnd = () => {
@@ -77,7 +87,6 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       };
 
       refresh();
-      // Recollect after layout settles (pair heights / fonts / images)
       const bootRefresh = window.setTimeout(refresh, 100);
       const bootRefresh2 = window.setTimeout(refresh, 500);
 
