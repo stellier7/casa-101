@@ -23,6 +23,10 @@ import {
   infoMotionFrom,
   type InfoPlace,
 } from "@/lib/photo-info";
+import {
+  MAGNET_BASE_PROGRESS,
+  MAGNET_COVER_PROGRESS,
+} from "@/lib/scroll-magnet";
 
 export type PhotoChapter = {
   src: string;
@@ -164,11 +168,7 @@ export function CinematicPair({
   if (quiet || reduceMotion) {
     return (
       <>
-        <QuietFrame
-          photo={base}
-          overlay={overlay}
-          priority={priority}
-        />
+        <QuietFrame photo={base} overlay={overlay} priority={priority} />
         {cover ? <QuietFrame photo={cover} /> : null}
       </>
     );
@@ -183,11 +183,30 @@ export function CinematicPair({
       baseIndex={baseIndex}
       priority={priority}
       overlay={overlay}
-      scrollVh={isMobile ? (cover ? 260 : 180) : scrollVh}
+      scrollVh={isMobile ? (cover ? 220 : 160) : scrollVh}
       isHero={isHero}
       isMobile={isMobile}
     />
   );
+}
+
+/**
+ * Reversible hysteresis: cover “owns” the frame after settle to absorb sticky
+ * unpin jitter, but releases when the user scrolls back into the base band.
+ */
+function useCoverOwns(
+  progress: MotionValue<number>,
+  enabled: boolean,
+  ownAt: number,
+  releaseAt: number,
+) {
+  const [owns, setOwns] = useState(false);
+  useMotionValueEvent(progress, "change", (v) => {
+    if (!enabled) return;
+    if (v >= ownAt) setOwns(true);
+    else if (v <= releaseAt) setOwns(false);
+  });
+  return owns;
 }
 
 function ImmersivePair({
@@ -218,21 +237,13 @@ function ImmersivePair({
     offset: ["start start", "end end"],
   });
 
-  /**
-   * Latch once the cover has landed. Sticky + useScroll can jitter progress
-   * backward when a section unpins — without a latch the base flashes again
-   * (1 → 2 → glimpse of 1 → 3). After latch we never reveal the base.
-   */
-  const [coverSettled, setCoverSettled] = useState(false);
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    // Slide-up holds the base longer so the parallax read lands before we latch
-    const latchAt = coverEffect === "slideUp" ? 0.68 : 0.5;
-    if (cover && v >= latchAt) setCoverSettled(true);
-  });
+  const isSlideUp = coverEffect === "slideUp";
+  const ownAt = isSlideUp ? 0.78 : 0.72;
+  const releaseAt = 0.38;
+  const coverOwns = useCoverOwns(scrollYProgress, Boolean(cover), ownAt, releaseAt);
 
   const basePan = isMobile && needsWidePan(base.orientation);
   const baseDir = panDirectionForIndex(baseIndex);
-  const isSlideUp = coverEffect === "slideUp";
 
   // Finish the wide-photo pan during the hold beat, before the cover arrives
   const basePanProgress = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
@@ -265,11 +276,19 @@ function ImmersivePair({
           : ["0%", "-2%", "-6%", "-9%"],
   );
 
-  // Under slide-up, keep the base visible longer so parallax is readable
+  /**
+   * Overlapping crossfade — cover reaches full opacity before base is gone
+   * so sticky jitter never flashes black between layers.
+   */
   const baseLayerOpacity = useTransform(
     scrollYProgress,
-    isSlideUp ? [0.58, 0.74] : [0.42, 0.52],
+    isSlideUp ? [0.5, 0.72] : [0.4, 0.55],
     [1, 0],
+  );
+  const coverOpacity = useTransform(
+    scrollYProgress,
+    isSlideUp ? [0.34, 0.55] : [0.32, 0.48],
+    [0, 1],
   );
 
   const baseCopyOpacity = useTransform(
@@ -277,12 +296,10 @@ function ImmersivePair({
     [0, 0.06, 0.22, 0.32],
     [0.5, 1, 1, 0],
   );
-  // Shared cover fade — slides get an even softer local curve in CoverLayer
-  const coverOpacity = useTransform(scrollYProgress, [0.34, 0.52], [0, 1]);
   const coverCopyOpacity = useTransform(
     scrollYProgress,
-    [0.55, 0.66],
-    [0, 1],
+    [0.55, 0.66, 0.9, 1],
+    [0, 1, 1, 1],
   );
 
   const basePlace = base.infoPlace ?? "bottom";
@@ -322,26 +339,29 @@ function ImmersivePair({
     ? remapPlace(coverPlace)
     : coverPlace;
 
+  const parallaxActive = isHero && !isMobile && !coverOwns;
+
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-black"
+      className="relative w-full bg-black touch-pan-y"
       data-cover-effect={cover ? coverEffect : "solo"}
       data-pan={basePan ? baseDir : undefined}
+      data-magnet-base={MAGNET_BASE_PROGRESS}
+      data-magnet-cover={cover ? MAGNET_COVER_PROGRESS : undefined}
       style={{ height: `${scrollVh}vh` }}
     >
-      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
-        {/* Base — hidden forever after cover settles so it never flashes again */}
+      <div className="sticky top-0 h-[100svh] w-full touch-pan-y overflow-hidden bg-black">
         <motion.div
           className="absolute inset-0"
           style={{
             scale: baseScale,
             y: baseY,
-            opacity: coverSettled ? 0 : baseLayerOpacity,
-            pointerEvents: coverSettled ? "none" : undefined,
-            willChange: coverSettled ? undefined : "transform, opacity",
+            opacity: coverOwns ? 0 : baseLayerOpacity,
+            pointerEvents: coverOwns ? "none" : undefined,
+            willChange: "transform",
           }}
-          aria-hidden={coverSettled}
+          aria-hidden={coverOwns}
         >
           {basePan ? (
             <LandscapePanScrub
@@ -352,7 +372,7 @@ function ImmersivePair({
               progress={basePanProgress}
             />
           ) : isHero ? (
-            <CursorParallax enabled={!isMobile} strength={22}>
+            <CursorParallax enabled={parallaxActive} strength={22}>
               <Image
                 src={base.src}
                 alt={base.alt}
@@ -380,8 +400,8 @@ function ImmersivePair({
           <CoverLayer
             effect={coverEffect}
             progress={scrollYProgress}
-            opacity={coverSettled ? undefined : coverOpacity}
-            settled={coverSettled}
+            opacity={coverOwns ? undefined : coverOpacity}
+            forceOpaque={coverOwns}
             src={cover.src}
             alt={cover.alt}
             priority={false}
@@ -396,7 +416,7 @@ function ImmersivePair({
           aria-hidden="true"
         />
 
-        {!coverSettled && overlay ? (
+        {!coverOwns && overlay ? (
           <motion.div
             className="absolute inset-0 z-10 flex items-end justify-center"
             style={{ opacity: baseCopyOpacity }}
@@ -404,7 +424,7 @@ function ImmersivePair({
             {overlay}
           </motion.div>
         ) : null}
-        {!coverSettled && !overlay && base.info ? (
+        {!coverOwns && !overlay && base.info ? (
           <InfoCopy
             alt={base.alt}
             info={base.info}
@@ -420,8 +440,8 @@ function ImmersivePair({
             alt={cover.alt}
             info={cover.info}
             place={resolvedCoverPlace}
-            opacity={coverSettled ? undefined : coverCopyOpacity}
-            forceVisible={coverSettled}
+            opacity={coverOwns ? undefined : coverCopyOpacity}
+            forceVisible={coverOwns}
             x={coverInfoX}
             y={coverInfoY}
           />
@@ -458,11 +478,7 @@ function InfoCopy({
   return (
     <motion.div
       className={`pointer-events-none absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[place]}`}
-      style={
-        forceVisible
-          ? { opacity: 1 }
-          : { opacity, x, y }
-      }
+      style={forceVisible ? { opacity: 1 } : { opacity, x, y }}
     >
       <div className="max-w-[min(100%,24rem)]">
         <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/85 sm:text-xs">
@@ -480,7 +496,7 @@ function CoverLayer({
   effect,
   progress,
   opacity,
-  settled,
+  forceOpaque,
   src,
   alt,
   priority,
@@ -491,7 +507,7 @@ function CoverLayer({
   effect: CoverEffect;
   progress: MotionValue<number>;
   opacity?: MotionValue<number>;
-  settled: boolean;
+  forceOpaque: boolean;
   src: string;
   alt: string;
   priority: boolean;
@@ -510,15 +526,10 @@ function CoverLayer({
     isMobile ? [1.5, 1] : [1.85, 1],
   );
 
-  // Longer slide travel for a softer settle
   const slideUpY = useTransform(progress, [t0, t1], ["105%", "0%"]);
   const slideLeftX = useTransform(progress, [t0, t1], ["105%", "0%"]);
   const slideRightX = useTransform(progress, [t0, t1], ["-105%", "0%"]);
 
-  /**
-   * Soft fade on slides so the leading edge doesn’t feel hard-cut.
-   * Opacity eases in across most of the travel, finishing near settle.
-   */
   const slideFade = useTransform(
     progress,
     [t0, t0 + 0.12, t1 - 0.06, t1],
@@ -579,51 +590,51 @@ function CoverLayer({
     </div>
   );
 
-  // After latch: no reversible entrance transforms — cover stays put
-  if (settled) {
-    return (
-      <div className="absolute inset-0 z-[2] overflow-hidden bg-black">
-        {pan ? (
-          <LandscapePanScrub
-            src={src}
-            alt={alt}
-            priority={priority}
-            direction={dir}
-            progress={coverPanProgress}
-          />
-        ) : (
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            sizes="100vw"
-            priority={priority}
-            className="object-cover object-center"
-          />
-        )}
-      </div>
-    );
-  }
-
-  const style =
+  // Single motion tree for the whole pair life — no remount on settle
+  const motionStyle =
     effect === "zoomOut"
-      ? { opacity, scale: zoomOutScale }
+      ? {
+          opacity: forceOpaque ? 1 : opacity,
+          scale: forceOpaque ? 1 : zoomOutScale,
+        }
       : effect === "slideUp"
-        ? { opacity: slideFade, y: slideUpY }
+        ? {
+            opacity: forceOpaque ? 1 : slideFade,
+            y: forceOpaque ? "0%" : slideUpY,
+          }
         : effect === "slideLeft"
-          ? { opacity: slideFade, x: slideLeftX }
+          ? {
+              opacity: forceOpaque ? 1 : slideFade,
+              x: forceOpaque ? "0%" : slideLeftX,
+            }
           : effect === "slideRight"
-            ? { opacity: slideFade, x: slideRightX }
+            ? {
+                opacity: forceOpaque ? 1 : slideFade,
+                x: forceOpaque ? "0%" : slideRightX,
+              }
             : effect === "parallaxZoom"
-              ? { opacity, scale: parallaxScale, y: parallaxY }
+              ? {
+                  opacity: forceOpaque ? 1 : opacity,
+                  scale: forceOpaque ? 1.08 : parallaxScale,
+                  y: forceOpaque ? "0%" : parallaxY,
+                }
               : effect === "wipeUp"
-                ? { opacity, clipPath: wipeClip }
-                : { opacity: driftFade, x: driftX, scale: driftScale };
+                ? {
+                    opacity: forceOpaque ? 1 : opacity,
+                    clipPath: forceOpaque
+                      ? "inset(0% 0% 0% 0%)"
+                      : wipeClip,
+                  }
+                : {
+                    opacity: forceOpaque ? 1 : driftFade,
+                    x: forceOpaque ? "0%" : driftX,
+                    scale: forceOpaque ? 1.06 : driftScale,
+                  };
 
   return (
     <motion.div
       className="absolute inset-0 z-[2] overflow-hidden bg-black"
-      style={{ ...style, willChange: "transform, opacity" }}
+      style={{ ...motionStyle, willChange: "transform" }}
     >
       {media}
     </motion.div>
