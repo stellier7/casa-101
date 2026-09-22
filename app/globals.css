@@ -5,11 +5,14 @@
   --background: #f7f5f2;
   --background-soft: #efebe4;
   --foreground: #1c1917;
-  --muted: #6b635b;
+  /* ≥4.5:1 on --background for body-size muted copy */
+  --muted: #5c554e;
   --accent: #3d2b1f;
   --accent-hover: #2a1d15;
   --accent-foreground: #faf8f5;
   --line: rgba(61, 43, 31, 0.12);
+  --focus-ring: #3d2b1f;
+  --focus-ring-on-dark: #ffffff;
 }
 
 @theme inline {
@@ -39,41 +42,46 @@ body {
   overscroll-behavior-x: none;
 }
 
-/* Quiet-mode landscape reveal — slow LTR / RTL ken burns */
-@keyframes pan-ltr {
-  from {
-    transform: translateX(0%);
-  }
-  to {
-    transform: translateX(-36%);
-  }
-}
-
-@keyframes pan-rtl {
-  from {
-    transform: translateX(-36%);
-  }
-  to {
-    transform: translateX(0%);
-  }
-}
-
-.animate-pan-ltr {
-  animation: pan-ltr 14s ease-in-out infinite alternate;
-}
-
-.animate-pan-rtl {
-  animation: pan-rtl 14s ease-in-out infinite alternate;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-pan-ltr,
-  .animate-pan-rtl {
-    animation: none;
-  }
-}
-
 ::selection {
   background: color-mix(in srgb, var(--accent) 22%, white);
   color: var(--foreground);
+}
+
+/* Themed focus — visible keyboard path without fighting mouse clicks */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Skip link — first tab stop into brochure content */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--focus-ring-on-dark);
+  outline-offset: 3px;
 }

@@ -11,11 +11,16 @@ import {
 export default function Home() {
   return (
     <main className="w-full bg-black">
+      <a href="#brochure" className="skip-link">
+        Saltar al catálogo
+      </a>
       <ImmersiveStory />
 
       {/* —— Brochure details on light field —— */}
       <div
-        className="bg-[var(--background)] text-[var(--foreground)]"
+        id="brochure"
+        tabIndex={-1}
+        className="bg-[var(--background)] text-[var(--foreground)] outline-none"
         style={{
           backgroundImage:
             "radial-gradient(120% 80% at 50% -10%, #fffdf9 0%, transparent 55%), linear-gradient(180deg, var(--background) 0%, var(--background-soft) 100%)",
@@ -171,7 +176,7 @@ export default function Home() {
               href={getMapsUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-block text-sm text-[var(--accent)] underline-offset-4 hover:underline"
+              className="mt-3 inline-block text-sm text-[var(--accent)] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
               Abrir en Google Maps
             </a>
@@ -188,10 +193,17 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-xl px-6 pb-24 pt-4 text-center sm:pb-32">
-          <p className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]">
+        <section
+          id="contacto"
+          className="mx-auto max-w-xl px-6 pb-24 pt-4 text-center sm:pb-32"
+          aria-labelledby="visitas-heading"
+        >
+          <h2
+            id="visitas-heading"
+            className="text-xs tracking-[0.2em] uppercase text-[var(--muted)]"
+          >
             Visitas
-          </p>
+          </h2>
           <p className="mt-3 text-base leading-relaxed text-[var(--foreground)] sm:text-lg">
             {PROPERTY.visits}
           </p>
@@ -270,7 +282,7 @@ function ParkingIcon() {
 
 function CalendarIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--accent)]">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--accent)]" aria-hidden="true">
       <rect x="3" y="5" width="18" height="16" rx="2" />
       <path d="M3 10h18M8 3v4M16 3v4" />
     </svg>
@@ -279,7 +291,7 @@ function CalendarIcon() {
 
 function LeafIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--accent)]">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--accent)]" aria-hidden="true">
       <path d="M5 19c8-1 12-6 14-14-7 1-12 5-14 14Z" />
       <path d="M5 19c2-4 6-7 11-8" />
     </svg>

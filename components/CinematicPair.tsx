@@ -85,14 +85,14 @@ function LandscapePanScrub({
 
   return (
     <motion.div
-      className="absolute top-0 h-full w-[155%] will-change-transform"
-      style={{ x }}
+      className="absolute top-0 h-full w-[155%]"
+      style={{ x, willChange: "transform" }}
     >
       <Image
         src={src}
         alt={alt}
         fill
-        sizes="200vw"
+        sizes="155vw"
         priority={priority}
         className="object-cover object-center"
       />
@@ -100,68 +100,26 @@ function LandscapePanScrub({
   );
 }
 
-function LandscapePanLoop({
-  src,
-  alt,
-  priority,
-  direction,
-}: {
-  src: string;
-  alt: string;
-  priority?: boolean;
-  direction: PanDirection;
-}) {
-  return (
-    <div
-      className={`absolute top-0 h-full w-[155%] will-change-transform ${
-        direction === "ltr" ? "animate-pan-ltr" : "animate-pan-rtl"
-      }`}
-    >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes="200vw"
-        priority={priority}
-        className="object-cover object-center"
-      />
-    </div>
-  );
-}
-
 function QuietFrame({
   photo,
   overlay,
   priority,
-  photoIndex,
 }: {
   photo: PhotoChapter;
   overlay?: ReactNode;
   priority?: boolean;
-  photoIndex: number;
 }) {
-  const pan = needsWidePan(photo.orientation);
-  const direction = panDirectionForIndex(photoIndex);
-
+  // Quiet / reduced-motion: static full-bleed frames only — no ken-burns pan
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-black">
-      {pan ? (
-        <LandscapePanLoop
-          src={photo.src}
-          alt={photo.alt}
-          priority={priority}
-          direction={direction}
-        />
-      ) : (
-        <Image
-          src={photo.src}
-          alt={photo.alt}
-          fill
-          sizes="100vw"
-          priority={priority}
-          className="object-cover object-center"
-        />
-      )}
+      <Image
+        src={photo.src}
+        alt={photo.alt}
+        fill
+        sizes="100vw"
+        priority={priority}
+        className="object-cover object-center"
+      />
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"
         aria-hidden="true"
@@ -175,7 +133,7 @@ function QuietFrame({
           className={`absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[photo.infoPlace ?? "bottom"]}`}
         >
           <div className="max-w-md px-1">
-            <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70">
+            <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/85">
               {photo.alt}
             </p>
             <p className="mt-2 text-xl font-light leading-snug text-white sm:text-2xl">
@@ -210,11 +168,8 @@ export function CinematicPair({
           photo={base}
           overlay={overlay}
           priority={priority}
-          photoIndex={baseIndex}
         />
-        {cover ? (
-          <QuietFrame photo={cover} photoIndex={baseIndex + 1} />
-        ) : null}
+        {cover ? <QuietFrame photo={cover} /> : null}
       </>
     );
   }
@@ -378,12 +333,13 @@ function ImmersivePair({
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
         {/* Base — hidden forever after cover settles so it never flashes again */}
         <motion.div
-          className="absolute inset-0 will-change-transform"
+          className="absolute inset-0"
           style={{
             scale: baseScale,
             y: baseY,
             opacity: coverSettled ? 0 : baseLayerOpacity,
             pointerEvents: coverSettled ? "none" : undefined,
+            willChange: coverSettled ? undefined : "transform, opacity",
           }}
           aria-hidden={coverSettled}
         >
@@ -428,7 +384,7 @@ function ImmersivePair({
             settled={coverSettled}
             src={cover.src}
             alt={cover.alt}
-            priority={priority}
+            priority={false}
             isMobile={isMobile}
             orientation={cover.orientation}
             photoIndex={baseIndex + 1}
@@ -509,7 +465,7 @@ function InfoCopy({
       }
     >
       <div className="max-w-[min(100%,24rem)]">
-        <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70 sm:text-xs">
+        <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/85 sm:text-xs">
           {alt}
         </p>
         <p className="mt-2 text-2xl font-light leading-tight tracking-wide text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl">
@@ -666,8 +622,8 @@ function CoverLayer({
 
   return (
     <motion.div
-      className="absolute inset-0 z-[2] overflow-hidden bg-black will-change-transform"
-      style={style}
+      className="absolute inset-0 z-[2] overflow-hidden bg-black"
+      style={{ ...style, willChange: "transform, opacity" }}
     >
       {media}
     </motion.div>

@@ -54,7 +54,11 @@ export function CursorParallax({
   }, [enabled, strength]);
 
   return (
-    <div ref={ref} className="absolute inset-[-6%] will-change-transform">
+    <div
+      ref={ref}
+      className="absolute inset-[-6%]"
+      style={enabled ? { willChange: "transform" } : undefined}
+    >
       {children}
     </div>
   );
