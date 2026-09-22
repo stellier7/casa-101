@@ -67,7 +67,7 @@ button:focus-visible {
 .skip-link {
   position: absolute;
   left: 1rem;
-  top: 1rem;
+  top: 0;
   z-index: 100;
   padding: 0.75rem 1.25rem;
   background: var(--accent);
@@ -75,13 +75,16 @@ button:focus-visible {
   font-size: 0.875rem;
   letter-spacing: 0.04em;
   text-decoration: none;
-  transform: translateY(-160%);
-  transition: transform 0.2s ease;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
 }
 
 .skip-link:focus,
 .skip-link:focus-visible {
-  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(1rem);
   outline: 2px solid var(--focus-ring-on-dark);
   outline-offset: 3px;
 }

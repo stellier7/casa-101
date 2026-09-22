@@ -38,7 +38,7 @@ export function ImmersiveStory() {
                       <h1 className="text-5xl font-light tracking-[0.06em] sm:text-7xl md:text-8xl">
                         {PROPERTY.name}
                       </h1>
-                      <p className="mt-4 text-xs font-light tracking-[0.28em] uppercase text-white/80 sm:mt-5 sm:text-base">
+                      <p className="mt-4 text-xs font-light tracking-[0.28em] uppercase text-white/90 sm:mt-5 sm:text-base">
                         {PROPERTY.location}
                       </p>
                       <p className="mt-6 text-lg font-light tracking-wide text-white/95 sm:mt-8 sm:text-2xl">
