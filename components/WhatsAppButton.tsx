@@ -3,15 +3,27 @@ import { getWhatsAppUrl, type Property } from "@/lib/property";
 type WhatsAppButtonProps = {
   property: Property;
   className?: string;
+  variant?: "solid" | "ghost";
 };
 
-export function WhatsAppButton({ property, className = "" }: WhatsAppButtonProps) {
+const VARIANT = {
+  solid:
+    "bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent-hover)] focus-visible:outline-[var(--accent)]",
+  ghost:
+    "border border-white/80 bg-transparent text-white hover:bg-white hover:text-[#070604] focus-visible:outline-white",
+} as const;
+
+export function WhatsAppButton({
+  property,
+  className = "",
+  variant = "solid",
+}: WhatsAppButtonProps) {
   return (
     <a
       href={getWhatsAppUrl(property)}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center gap-2 bg-[var(--accent)] px-8 py-3.5 text-sm font-medium tracking-wide text-[var(--accent-foreground)] transition-colors duration-300 hover:bg-[var(--accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 text-sm font-medium tracking-wide transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${VARIANT[variant]} ${className}`}
     >
       <WhatsAppIcon className="h-5 w-5 shrink-0" />
       Contactar por WhatsApp

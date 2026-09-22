@@ -4,11 +4,11 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { useMediaQuery } from "@/lib/media";
 
 type QuietContextValue = {
   quiet: boolean;
@@ -19,25 +19,24 @@ type QuietContextValue = {
 const QuietContext = createContext<QuietContextValue | null>(null);
 
 export function QuietViewProvider({ children }: { children: ReactNode }) {
-  const [quiet, setQuiet] = useState(false);
+  const prefersReduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const [override, setOverride] = useState<boolean | null>(null);
+  const quiet = override ?? prefersReduced;
 
-  // Only force quiet for reduced-motion — phones default to Show mode (user preference)
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setQuiet(true);
-    }
+  const toggle = useCallback(() => {
+    setOverride((current) => !(current ?? prefersReduced));
+  }, [prefersReduced]);
+
+  const setQuiet = useCallback((v: boolean) => {
+    setOverride(v);
   }, []);
-
-  const toggle = useCallback(() => setQuiet((q) => !q), []);
 
   const value = useMemo(
     () => ({ quiet, toggle, setQuiet }),
-    [quiet, toggle],
+    [quiet, toggle, setQuiet],
   );
 
-  return (
-    <QuietContext.Provider value={value}>{children}</QuietContext.Provider>
-  );
+  return <QuietContext.Provider value={value}>{children}</QuietContext.Provider>;
 }
 
 export function useQuietView() {
