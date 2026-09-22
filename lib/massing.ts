@@ -56,9 +56,9 @@ export type CameraKeyframe = {
 };
 
 export const CAMERA_KEYFRAMES: CameraKeyframe[] = [
-  { t: 0, position: [0, 88, 22], lookAt: [0, 0, 34] },
-  { t: 0.38, position: [4, 62, 12], lookAt: [0, 1.4, 38] },
-  { t: 0.68, position: [28, 18, 6], lookAt: [0, 3.2, 42] },
+  { t: 0, position: [28, 64, -6], lookAt: [0, 0, 40] },
+  { t: 0.38, position: [22, 36, 8], lookAt: [0, 1.6, 38] },
+  { t: 0.68, position: [24, 14, 18], lookAt: [0, 3.2, 42] },
   { t: 1, position: [7.5, 3.4, 64], lookAt: [0, 2.1, 50] },
 ];
 
@@ -194,7 +194,7 @@ export function lerpCamera(progress: number): {
 }
 
 export function photoOverlayOpacity(progress: number): number {
-  return clamp01((progress - 0.82) / 0.14);
+  return clamp01((progress - 0.74) / 0.16);
 }
 
 function clamp01(n: number): number {

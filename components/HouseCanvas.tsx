@@ -116,13 +116,14 @@ export default function HouseCanvas({
         powerPreference: "high-performance",
         stencil: false,
       }}
-      camera={{ fov: 36, near: 0.1, far: 260, position: [0, 88, 22] }}
+      camera={{ fov: 36, near: 0.1, far: 260, position: [28, 64, -6] }}
       style={{ pointerEvents: "none", width: "100%", height: "100%" }}
       onCreated={({ gl, invalidate }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.08;
         invalidateRef.current = invalidate;
         invalidate();
+        requestAnimationFrame(() => invalidate());
       }}
     >
       <VisibilityGuard />

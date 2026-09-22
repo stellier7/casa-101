@@ -6,6 +6,7 @@ import {
   buildMassing,
   extrudeScale,
   lerpCamera,
+  photoOverlayOpacity,
   volumeFootprint,
 } from "./massing.ts";
 
@@ -43,6 +44,13 @@ describe("Casa 101 massing", () => {
     assert.ok(extrudeScale(0) < 0.08);
     assert.equal(extrudeScale(1), 1);
     assert.ok(extrudeScale(0.25) > extrudeScale(0));
+  });
+
+  it("holds the photo overlay until the camera has arrived at the pool", () => {
+    assert.equal(photoOverlayOpacity(0), 0);
+    assert.equal(photoOverlayOpacity(0.7), 0);
+    assert.ok(photoOverlayOpacity(0.88) > 0.7);
+    assert.equal(photoOverlayOpacity(1), 1);
   });
 
   it("dollies the camera from plan view down to eye level at the pool", () => {

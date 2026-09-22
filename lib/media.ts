@@ -3,6 +3,14 @@ import { useCallback, useSyncExternalStore } from "react";
 const getFalse = () => false;
 const getTrue = () => true;
 
+export function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export function useMediaQuery(query: string, serverValue = false) {
   const subscribe = useCallback(
     (onChange: () => void) => {

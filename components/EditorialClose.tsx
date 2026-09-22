@@ -188,6 +188,7 @@ export function EditorialClose() {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             allowFullScreen
+            tabIndex={-1}
           />
         </div>
       </section>

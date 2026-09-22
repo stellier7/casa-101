@@ -41,6 +41,16 @@
   mask-image: linear-gradient(to top, black 0%, black 38%, transparent 78%);
 }
 
+.massing-pin {
+  height: 260vh;
+}
+
+@media (max-width: 767px) {
+  .massing-pin {
+    height: 190vh;
+  }
+}
+
 html {
   scroll-behavior: auto; /* Lenis owns smooth scroll */
   background-color: #000;

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useQuietView } from "@/components/QuietView";
-import { useMediaQuery } from "@/lib/media";
+import { useIsClient, useMediaQuery } from "@/lib/media";
 import { PROPERTY } from "@/lib/property";
 import { registerMotion, ScrollTrigger } from "@/lib/motion";
 import { photoOverlayOpacity } from "@/lib/massing";
@@ -21,7 +21,7 @@ const HouseCanvas = dynamic(() => import("@/components/HouseCanvas"), {
 
 function MassingPoster() {
   return (
-    <div className="flex h-full w-full flex-col justify-center bg-[#f4efe6] px-5 py-10 sm:px-10">
+    <div className="flex min-h-[100svh] w-full flex-col justify-center bg-[#f4efe6] px-5 py-16 sm:px-10">
       <p className="text-center text-[0.65rem] tracking-[0.28em] uppercase text-[#6b635b]">
         Planta arquitectónica
       </p>
@@ -64,20 +64,26 @@ class WebGlGate extends Component<
   }
 }
 
+type SceneMode = "pending" | "webgl" | "poster";
+
 export function MassingChapter() {
   const { quiet } = useQuietView();
+  const client = useIsClient();
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const mobile = useMediaQuery("(max-width: 767px)");
+  const mode: SceneMode = !client
+    ? "pending"
+    : quiet || reduce
+      ? "poster"
+      : "webgl";
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef(0);
   const invalidateRef = useRef<(() => void) | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
-
-  const still = quiet || reduce;
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (still) return;
+    if (mode !== "webgl") return;
     registerMotion();
     const section = sectionRef.current;
     if (!section) return;
@@ -91,11 +97,13 @@ export function MassingChapter() {
         progressRef.current = self.progress;
         invalidateRef.current?.();
         const overlay = photoOverlayOpacity(self.progress);
-        if (overlayRef.current) {
-          overlayRef.current.style.opacity = String(overlay);
+        if (overlayRef.current) overlayRef.current.style.opacity = String(overlay);
+        if (canvasWrapRef.current) {
+          canvasWrapRef.current.style.opacity = String(1 - overlay);
         }
         if (copyRef.current) {
-          const copyFade = 1 - Math.min(1, Math.max(0, (self.progress - 0.28) / 0.35));
+          const copyFade =
+            1 - Math.min(1, Math.max(0, (self.progress - 0.22) / 0.32));
           copyRef.current.style.opacity = String(copyFade);
         }
       },
@@ -104,13 +112,13 @@ export function MassingChapter() {
     return () => {
       trigger.kill();
     };
-  }, [still]);
+  }, [mode]);
 
-  if (still) {
+  if (mode === "poster") {
     return (
       <section
         id="planta"
-        className="relative min-h-[100svh] w-full"
+        className="relative min-h-[100svh] w-full bg-[#f4efe6]"
         aria-label="Planta arquitectónica"
       >
         <MassingPoster />
@@ -122,31 +130,32 @@ export function MassingChapter() {
     <section
       id="planta"
       ref={sectionRef}
-      className="relative w-full bg-[#070604]"
-      style={{ height: mobile ? "190vh" : "260vh" }}
+      className="massing-pin relative w-full bg-[#070604]"
       aria-label="De la planta al volumen"
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[#070604]">
-        <WebGlGate fallback={<MassingPoster />}>
-          <div className="absolute inset-0">
-            <HouseCanvas
-              progressRef={progressRef}
-              invalidateRef={invalidateRef}
-            />
-          </div>
-        </WebGlGate>
+        {mode === "webgl" ? (
+          <WebGlGate fallback={<MassingPoster />}>
+            <div ref={canvasWrapRef} className="absolute inset-0">
+              <HouseCanvas
+                progressRef={progressRef}
+                invalidateRef={invalidateRef}
+              />
+            </div>
+          </WebGlGate>
+        ) : null}
 
         <div
           ref={copyRef}
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 px-5 pt-20 text-center text-white sm:px-10 sm:pt-24"
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 px-5 pt-16 text-left text-white sm:px-12 sm:pt-20"
         >
           <p className="text-[0.65rem] tracking-[0.32em] uppercase text-white/65">
             Del plano al volumen
           </p>
-          <h2 className="font-display mt-3 text-4xl leading-tight sm:text-6xl md:text-7xl">
+          <h2 className="font-display mt-3 max-w-xl text-4xl leading-tight sm:text-6xl">
             El lote se vuelve casa
           </h2>
-          <p className="mx-auto mt-4 max-w-md text-sm font-light tracking-wide text-white/75 sm:text-base">
+          <p className="mt-4 max-w-sm text-sm font-light tracking-wide text-white/75 sm:text-base">
             {PROPERTY.specs[0].value} de terreno. La cámara baja del plano a la
             piscina.
           </p>

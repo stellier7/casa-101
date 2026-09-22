@@ -120,7 +120,7 @@ export function CinematicHero() {
       />
       <div className="film-grain z-[5]" aria-hidden="true" />
 
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-end px-5 pb-16 text-center sm:px-10 sm:pb-20">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-end px-5 pb-24 text-center sm:px-10 sm:pb-20">
         <p className="hero-kicker text-[0.7rem] tracking-[0.34em] uppercase text-white/75 sm:text-xs">
           {PROPERTY.location}
         </p>
