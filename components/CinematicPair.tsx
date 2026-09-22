@@ -9,7 +9,13 @@ import {
   type MotionValue,
 } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { CursorParallax } from "@/components/CursorParallax";
 import { useQuietView } from "@/components/QuietView";
 import type { CoverEffect } from "@/lib/cinematic";
@@ -49,15 +55,15 @@ type CinematicPairProps = {
 };
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const sync = () => setMobile(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-  return mobile;
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia("(max-width: 767px)");
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia("(max-width: 767px)").matches,
+    () => false,
+  );
 }
 
 function needsWidePan(orientation?: PhotoOrientation) {

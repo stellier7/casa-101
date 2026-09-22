@@ -3,9 +3,6 @@
 export const MAGNET_BASE_PROGRESS = 0.22;
 export const MAGNET_COVER_PROGRESS = 0.85;
 
-/** Max distance (px) to pull toward a magnet after finger lift */
-export const MAGNET_CATCH_PX = 220;
-
 export function sectionMagnetYs(section: HTMLElement, viewportH: number): number[] {
   const top = section.offsetTop;
   const height = section.offsetHeight;
@@ -24,22 +21,21 @@ export function collectMagnetYs(viewportH = window.innerHeight): number[] {
   sections.forEach((section) => {
     ys.push(...sectionMagnetYs(section, viewportH));
   });
+  // Brochure / page top as a soft landing when above the story
+  if (ys.length && ys[0] > 0) ys.unshift(0);
   return ys;
 }
 
-/** Nearest magnet within catch distance, or null if none close enough */
-export function nearestMagnet(
-  scrollY: number,
-  magnets: number[],
-  catchPx = MAGNET_CATCH_PX,
-): number | null {
-  let best: number | null = null;
-  let bestDist = Infinity;
-  for (const y of magnets) {
-    const d = Math.abs(y - scrollY);
-    if (d < bestDist && d <= catchPx) {
+/** Always snap to the nearest rest stop (mandatory magnet feel) */
+export function nearestMagnet(scrollY: number, magnets: number[]): number | null {
+  if (!magnets.length) return null;
+  let best = magnets[0];
+  let bestDist = Math.abs(best - scrollY);
+  for (let i = 1; i < magnets.length; i++) {
+    const d = Math.abs(magnets[i] - scrollY);
+    if (d < bestDist) {
       bestDist = d;
-      best = y;
+      best = magnets[i];
     }
   }
   return best;

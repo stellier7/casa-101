@@ -41,6 +41,12 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
       const snapIfNeeded = () => {
         if (snapping || touchActive) return;
+        refresh();
+        // Don't magnetize once the visitor has left the immersive story
+        const storyEnd = magnets.length
+          ? magnets[magnets.length - 1] + window.innerHeight
+          : 0;
+        if (window.scrollY > storyEnd) return;
         const target = nearestMagnet(window.scrollY, magnets);
         if (target == null || Math.abs(target - window.scrollY) < 2) return;
         snapping = true;
@@ -52,7 +58,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
       const scheduleSnap = () => {
         window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(snapIfNeeded, 90);
+        settleTimer = window.setTimeout(snapIfNeeded, 120);
       };
 
       const onTouchStart = () => {
@@ -71,6 +77,15 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       };
 
       refresh();
+      // Recollect after layout settles (pair heights / fonts / images)
+      const bootRefresh = window.setTimeout(refresh, 100);
+      const bootRefresh2 = window.setTimeout(refresh, 500);
+
+      const ro = new ResizeObserver(refresh);
+      document
+        .querySelectorAll("[data-cover-effect]")
+        .forEach((el) => ro.observe(el));
+
       window.addEventListener("resize", refresh);
       window.addEventListener("orientationchange", refresh);
       window.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -81,6 +96,9 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
       return () => {
         window.clearTimeout(settleTimer);
+        window.clearTimeout(bootRefresh);
+        window.clearTimeout(bootRefresh2);
+        ro.disconnect();
         window.removeEventListener("resize", refresh);
         window.removeEventListener("orientationchange", refresh);
         window.removeEventListener("touchstart", onTouchStart);
