@@ -11,4 +11,10 @@ describe("favicon", () => {
     assert.match(svg, /#070604/);
     assert.match(svg, /#f7f5f2/);
   });
+
+  it("replaces the default Next.js favicon.ico", () => {
+    const ico = readFileSync(new URL("../app/favicon.ico", import.meta.url));
+    assert.equal(ico.readUInt16LE(2), 1);
+    assert.ok(ico.byteLength > 400);
+  });
 });
