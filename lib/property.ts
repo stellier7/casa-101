@@ -101,18 +101,12 @@ export const PROPERTY = {
   },
 
   /**
-   * Hero uses the façade as the title card; the walk renders every listing photo.
-   * `info` = 1–2 lines on the photo; `orientation` drives mobile pan for landscape.
-   * The dusk pool closes the sequence.
+   * The façade lives only on the hero title card. The walk starts at the
+   * entrance so that frame is not shown twice. `info` = 1–2 lines on the
+   * photo; `orientation` drives mobile pan for landscape. The dusk pool
+   * closes the sequence.
    */
   photos: [
-    {
-      src: "/photos/01-fachada.jpg",
-      alt: "Fachada principal",
-      info: null,
-      infoPlace: "bottom",
-      orientation: "landscape",
-    },
     {
       src: "/photos/02-entrada.jpg",
       alt: "Entrada principal",
