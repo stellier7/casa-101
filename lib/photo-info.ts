@@ -24,23 +24,3 @@ export const INFO_PLACE_CLASS: Record<InfoPlace, string> = {
     "items-end justify-end pb-12 sm:pb-20 pr-5 sm:pr-12 pl-12 sm:pl-20 text-right",
 };
 
-/** Slide-in axis tied to placement */
-export function infoMotionFrom(place: InfoPlace): {
-  x: [string, string];
-  y: [string, string];
-} {
-  switch (place) {
-    case "top":
-      return { x: ["0%", "0%"], y: ["-28%", "0%"] };
-    case "bottom":
-      return { x: ["0%", "0%"], y: ["28%", "0%"] };
-    case "left":
-    case "top-left":
-    case "bottom-left":
-      return { x: ["-18%", "0%"], y: ["0%", "0%"] };
-    case "right":
-    case "top-right":
-    case "bottom-right":
-      return { x: ["18%", "0%"], y: ["0%", "0%"] };
-  }
-}

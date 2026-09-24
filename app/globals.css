@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "lenis/dist/lenis.css";
 
 :root {
   --background: #f7f5f2;
@@ -32,27 +31,13 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
 }
 
-.hero-plane {
-  will-change: transform;
-}
-
 .hero-plane-mid {
   -webkit-mask-image: linear-gradient(to top, black 0%, black 38%, transparent 78%);
   mask-image: linear-gradient(to top, black 0%, black 38%, transparent 78%);
 }
 
-.massing-pin {
-  height: 260vh;
-}
-
-@media (max-width: 767px) {
-  .massing-pin {
-    height: 190vh;
-  }
-}
-
 html {
-  scroll-behavior: auto; /* Lenis owns smooth scroll */
+  scroll-behavior: smooth;
   background-color: #000;
   overflow-x: clip;
   overscroll-behavior-x: none;
@@ -72,7 +57,6 @@ body {
   overscroll-behavior-x: none;
 }
 
-/* Quiet-mode landscape reveal — slow LTR / RTL ken burns */
 @keyframes pan-ltr {
   from {
     transform: translateX(0%);
