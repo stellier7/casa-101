@@ -101,8 +101,9 @@ export const PROPERTY = {
   },
 
   /**
-   * Hero uses the first photo; sequence renders all 14.
+   * Hero uses the façade as the title card; the walk renders every listing photo.
    * `info` = 1–2 lines on the photo; `orientation` drives mobile pan for landscape.
+   * The dusk pool closes the sequence.
    */
   photos: [
     {
@@ -162,13 +163,6 @@ export const PROPERTY = {
       orientation: "square",
     },
     {
-      src: "/photos/09-piscina-atardecer.jpg",
-      alt: "Piscina al atardecer",
-      info: "Disponible a partir del 1 de enero de 2027",
-      infoPlace: "bottom",
-      orientation: "landscape",
-    },
-    {
       src: "/photos/10-comedor.jpg",
       alt: "Comedor",
       info: "Primer nivel · comedor y sala social",
@@ -186,7 +180,7 @@ export const PROPERTY = {
       src: "/photos/12-sala.jpg",
       alt: "Sala principal",
       info: "Vestíbulo de doble altura · sala social",
-      infoPlace: "left",
+      infoPlace: "bottom-left",
       orientation: "portrait",
     },
     {
@@ -202,6 +196,13 @@ export const PROPERTY = {
       info: "Suite principal · chimenea y terraza",
       infoPlace: "top-left",
       orientation: "portrait",
+    },
+    {
+      src: "/photos/09-piscina-atardecer.jpg",
+      alt: "Piscina al atardecer",
+      info: "Disponible a partir del 1 de enero de 2027",
+      infoPlace: "bottom",
+      orientation: "landscape",
     },
   ],
 } as const;

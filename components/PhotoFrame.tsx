@@ -57,7 +57,7 @@ export function PhotoFrame({
         />
       )}
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/15"
         aria-hidden="true"
       />
       {photo.info ? (
@@ -65,10 +65,10 @@ export function PhotoFrame({
           className={`absolute inset-0 z-10 flex ${INFO_PLACE_CLASS[photo.infoPlace ?? "bottom"]}`}
         >
           <div className="max-w-md px-1">
-            <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/70">
+            <p className="text-[0.65rem] tracking-[0.28em] uppercase text-white/80 drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
               {photo.alt}
             </p>
-            <p className="mt-2 text-xl font-light leading-snug text-white sm:text-2xl">
+            <p className="mt-2 text-xl font-light leading-snug text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.8)] sm:text-2xl">
               {photo.info}
             </p>
           </div>
